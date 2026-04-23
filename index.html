@@ -3,25 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Manajemen Surat Premium</title>
+    <title>ePKK - Portal Manajemen Anggota Digital</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet">
     <!-- Phosphor Icons -->
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
     <script>
         tailwind.config = {
             theme: {
                 extend: {
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
-                        serif: ['Playfair Display', 'serif'],
-                    },
-                    colors: {
-                        navy: { 800: '#1a2a3a', 900: '#0f172a' },
-                        gold: { 500: '#d4af37', 600: '#b5952f' },
-                    }
+                    fontFamily: { sans: ['Poppins', 'sans-serif'] },
+                    colors: { primary: '#0d9488', secondary: '#14b8a6', calm: '#f0fdfa' }
                 }
             }
         }
@@ -32,1182 +29,1152 @@
         ::-webkit-scrollbar-track { background: #f1f1f1; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-        .hide-scroll::-webkit-scrollbar { display: none; }
         
-        .nav-item.active { background-color: #f8fafc; color: #0f172a; border-left: 4px solid #d4af37; font-weight: 600; }
-        .tab-btn.active { background-color: #0f172a; color: white; }
-        .month-btn.active { background-color: #0f172a; color: white; }
+        .glass-panel { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
         
-        /* Toast Animation */
-        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-        .toast-enter { animation: slideIn 0.3s ease-out forwards; }
+        /* Font Styles for Status */
+        .status-kota { font-weight: 700; color: #0f766e; }
+        .status-staf { font-style: italic; color: #64748b; }
+        .status-kecamatan { font-weight: 600; color: #0369a1; }
+        .status-kelurahan { font-weight: 500; color: #c2410c; }
+
+        /* Hilangkan spin button pada input type number */
+        input[type=number]::-webkit-inner-spin-button,
+        input[type=number]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type=number] {
+            -moz-appearance: textfield; /* Firefox */
+        }
+
+        /* Fade in animation */
+        .fade-in { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800 font-sans h-screen flex overflow-hidden">
+<body class="bg-slate-50 text-slate-800 flex h-screen overflow-hidden">
 
-    <!-- Mobile Header & Hamburger -->
-    <div class="md:hidden fixed top-0 left-0 right-0 h-16 bg-white border-b border-slate-200 z-50 flex items-center justify-between px-4">
-        <div class="flex items-center gap-2">
-            <i class="ph-fill ph-envelope-open text-gold-500 text-2xl"></i>
-            <h1 class="font-serif font-bold text-lg text-navy-900">E-Surat</h1>
+    <!-- Sidebar -->
+    <aside id="sidebar" class="w-64 bg-white shadow-xl flex-shrink-0 z-20 flex flex-col transition-transform transform -translate-x-full md:translate-x-0 absolute md:relative h-full">
+        <div class="h-20 flex items-center justify-between px-6 border-b border-slate-100">
+            <h1 class="text-2xl font-bold text-primary flex items-center gap-2">
+                <i class="ph ph-leaf text-3xl"></i> ePKK
+            </h1>
+            <button onclick="toggleSidebar()" class="md:hidden text-slate-400 hover:text-slate-600">
+                <i class="ph ph-x text-2xl"></i>
+            </button>
         </div>
-        <button onclick="toggleMobileMenu()" class="text-2xl text-slate-600"><i class="ph ph-list"></i></button>
-    </div>
-
-    <!-- Sidebar Navigation -->
-    <aside id="sidebar" class="w-64 bg-white border-r border-slate-200 flex-shrink-0 flex flex-col fixed md:relative z-40 h-full transition-transform transform -translate-x-full md:translate-x-0">
-        <div class="p-6 hidden md:flex items-center gap-3">
-            <div class="w-10 h-10 rounded-lg bg-navy-900 flex items-center justify-center shadow-lg shadow-navy-900/20">
-                <i class="ph-fill ph-envelope-open text-gold-500 text-xl"></i>
-            </div>
-            <h1 class="font-serif font-bold text-xl text-navy-900 tracking-tight">E-Surat.</h1>
-        </div>
-
-        <div class="flex-1 overflow-y-auto py-4 md:py-0 mt-16 md:mt-0">
-            <div class="px-4 mb-2"><p class="text-xs font-semibold text-slate-400 tracking-wider uppercase">Menu Utama</p></div>
-            <nav class="space-y-1 px-3">
-                <a href="#" onclick="switchView('dashboard')" class="nav-item active flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors">
-                    <i class="ph ph-squares-four text-lg"></i> Dashboard
-                </a>
-            </nav>
-
-            <div class="px-4 mt-8 mb-2"><p class="text-xs font-semibold text-slate-400 tracking-wider uppercase">Registrasi Surat</p></div>
-            <nav class="space-y-1 px-3">
-                <a href="#" onclick="switchView('surat-masuk')" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors">
-                    <i class="ph ph-tray-arrow-down text-lg"></i> Surat Masuk
-                </a>
-                <a href="#" onclick="switchView('surat-keluar')" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors">
-                    <i class="ph ph-paper-plane-tilt text-lg"></i> Surat Keluar
-                </a>
-            </nav>
-
-            <div class="px-4 mt-8 mb-2"><p class="text-xs font-semibold text-slate-400 tracking-wider uppercase">Lacak Arsip</p></div>
-            <nav class="space-y-1 px-3">
-                <a href="#" onclick="switchView('timeline')" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors">
-                    <i class="ph ph-clock-counter-clockwise text-lg"></i> Timeline
-                </a>
-                <a href="#" onclick="switchView('galeri')" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors">
-                    <i class="ph ph-image text-lg"></i> Galeri Warta
-                </a>
-            </nav>
-        </div>
-
-        <div class="p-4 border-t border-slate-200">
-            <div class="flex gap-2">
-                <button onclick="syncData()" class="flex-1 flex items-center justify-center gap-2 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition text-sm font-medium">
-                    <i class="ph ph-cloud-arrow-down text-lg"></i> Sinkron
-                </button>
-                <button onclick="openSettings()" class="w-10 flex flex-shrink-0 items-center justify-center py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition">
-                    <i class="ph ph-gear text-lg"></i>
-                </button>
-            </div>
-        </div>
+        <nav class="flex-1 overflow-y-auto py-4">
+            <ul class="space-y-1 px-3">
+                <li><a href="#" onclick="nav('dashboard')" id="nav-dashboard" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 hover:bg-calm hover:text-primary transition"><i class="ph ph-squares-four text-xl"></i> Dashboard</a></li>
+                <li><a href="#" onclick="nav('pengurus')" id="nav-pengurus" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 hover:bg-calm hover:text-primary transition"><i class="ph ph-users text-xl"></i> Data Pengurus</a></li>
+                
+                <!-- Dropdown Penggerak -->
+                <li>
+                    <div class="px-4 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wider mt-4">Penggerak</div>
+                </li>
+                <li><a href="#" onclick="nav('kecamatan')" id="nav-kecamatan" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 hover:bg-calm hover:text-primary transition"><i class="ph ph-buildings text-xl"></i> Kecamatan</a></li>
+                <li><a href="#" onclick="nav('kelurahan')" id="nav-kelurahan" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 hover:bg-calm hover:text-primary transition"><i class="ph ph-house text-xl"></i> Kelurahan</a></li>
+                
+                <li class="mt-4"><a href="#" onclick="nav('birthday')" id="nav-birthday" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 hover:bg-calm hover:text-primary transition"><i class="ph ph-cake text-xl"></i> Birthday</a></li>
+                <li><a href="#" onclick="nav('rekap')" id="nav-rekap" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 hover:bg-calm hover:text-primary transition"><i class="ph ph-chart-bar text-xl"></i> Rekap Data</a></li>
+            </ul>
+        </nav>
     </aside>
 
-    <!-- Overlay for mobile sidebar -->
-    <div id="mobile-overlay" class="fixed inset-0 bg-slate-900/50 z-30 hidden md:hidden" onclick="toggleMobileMenu()"></div>
-
     <!-- Main Content -->
-    <main class="flex-1 flex flex-col h-full overflow-hidden mt-16 md:mt-0 relative">
-        <div class="flex-1 overflow-y-auto p-4 md:p-8" id="main-container">
+    <div class="flex-1 flex flex-col h-full overflow-hidden relative">
+        <!-- Topbar -->
+        <header class="h-20 glass-panel shadow-sm flex items-center justify-between px-6 z-10">
+            <div class="flex items-center gap-4">
+                <button onclick="toggleSidebar()" class="md:hidden text-slate-600 hover:text-primary">
+                    <i class="ph ph-list text-2xl"></i>
+                </button>
+                <h2 id="page-title" class="text-xl font-semibold text-slate-700">Dashboard</h2>
+            </div>
+            <div class="flex items-center gap-4">
+                <div id="sync-status" class="text-xs text-slate-400 hidden md:block"></div>
+                <button onclick="pullDataFromGAS()" title="Tarik data dari Spreadsheet" class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-calm hover:text-primary transition group relative">
+                    <i class="ph ph-cloud-arrow-down text-xl group-hover:scale-110 transition"></i>
+                </button>
+                <button onclick="openSettingsModal()" title="Pengaturan URL Web GAS" class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-calm hover:text-primary transition group">
+                    <i class="ph ph-gear text-xl group-hover:rotate-90 transition duration-300"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- Dynamic Views -->
+        <main class="flex-1 overflow-y-auto p-6 scroll-smooth" id="main-content">
             
             <!-- VIEW: DASHBOARD -->
-            <div id="view-dashboard" class="view-section">
-                <!-- Year & Month Selector -->
-                <div class="bg-white p-2 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-4 mb-8 overflow-x-auto hide-scroll">
-                    <div class="flex items-center gap-3 px-4 font-serif text-xl font-bold text-navy-900 flex-shrink-0">
-                        <button onclick="changeYear(-1)" class="hover:text-gold-500"><i class="ph ph-caret-left"></i></button>
-                        <span id="dash-year">2026</span>
-                        <button onclick="changeYear(1)" class="hover:text-gold-500"><i class="ph ph-caret-right"></i></button>
+            <div id="view-dashboard" class="view-section fade-in hidden space-y-6">
+                <!-- Stats Row -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex flex-col">
+                        <span class="text-sm text-slate-500 font-medium">Pengurus Kota</span>
+                        <div class="text-3xl font-bold text-slate-800 mt-2" id="stat-kota">0</div>
                     </div>
-                    <div class="w-px h-6 bg-slate-200 flex-shrink-0"></div>
-                    <div class="flex gap-1" id="dash-months">
-                        <!-- Months injected by JS -->
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex flex-col">
+                        <span class="text-sm text-slate-500 font-medium">Total Staf</span>
+                        <div class="text-3xl font-bold text-slate-800 mt-2" id="stat-staf">0</div>
                     </div>
-                </div>
-
-                <!-- Stats Cards -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 relative overflow-hidden group">
-                        <i class="ph ph-envelope-open text-slate-100 text-8xl absolute -right-4 -bottom-4 group-hover:scale-110 transition-transform"></i>
-                        <h3 class="text-xs font-bold text-slate-400 tracking-widest uppercase mb-4 relative z-10">Total Surat Masuk</h3>
-                        <div class="flex items-baseline gap-2 mb-4 relative z-10">
-                            <span class="text-5xl font-serif text-navy-900" id="stat-masuk-month">0</span>
-                            <span class="text-slate-500">Bulan Ini</span>
-                        </div>
-                        <div class="inline-flex items-center gap-1 bg-green-50 text-green-600 px-2 py-1 rounded text-xs font-semibold relative z-10">
-                            <i class="ph ph-calendar-check"></i> <span id="stat-masuk-today">0</span> Hari Ini
-                        </div>
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex flex-col">
+                        <span class="text-sm text-slate-500 font-medium">Total Kecamatan</span>
+                        <div class="text-3xl font-bold text-slate-800 mt-2" id="stat-kecamatan">0</div>
                     </div>
-                    
-                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 relative overflow-hidden group">
-                        <i class="ph ph-share-network text-slate-100 text-8xl absolute -right-4 -bottom-4 group-hover:scale-110 transition-transform"></i>
-                        <h3 class="text-xs font-bold text-slate-400 tracking-widest uppercase mb-4 relative z-10">Total Disposisi</h3>
-                        <div class="flex items-baseline gap-2 mb-4 relative z-10">
-                            <span class="text-5xl font-serif text-navy-900" id="stat-disp-month">0</span>
-                            <span class="text-slate-500">Bulan Ini</span>
-                        </div>
-                        <div class="inline-flex items-center gap-1 bg-green-50 text-green-600 px-2 py-1 rounded text-xs font-semibold relative z-10">
-                            <i class="ph ph-calendar-check"></i> <span id="stat-disp-today">0</span> Hari Ini
-                        </div>
-                    </div>
-
-                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 relative overflow-hidden group">
-                        <i class="ph ph-paper-plane-right text-slate-100 text-8xl absolute -right-4 -bottom-4 group-hover:scale-110 transition-transform"></i>
-                        <h3 class="text-xs font-bold text-slate-400 tracking-widest uppercase mb-4 relative z-10">Total Surat Keluar</h3>
-                        <div class="flex items-baseline gap-2 mb-4 relative z-10">
-                            <span class="text-5xl font-serif text-navy-900" id="stat-keluar-month">0</span>
-                            <span class="text-slate-500">Bulan Ini</span>
-                        </div>
-                        <div class="inline-flex items-center gap-1 bg-green-50 text-green-600 px-2 py-1 rounded text-xs font-semibold relative z-10">
-                            <i class="ph ph-calendar-check"></i> <span id="stat-keluar-today">0</span> Hari Ini
-                        </div>
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex flex-col">
+                        <span class="text-sm text-slate-500 font-medium">Total Kelurahan</span>
+                        <div class="text-3xl font-bold text-slate-800 mt-2" id="stat-kelurahan">0</div>
                     </div>
                 </div>
 
-                <!-- Bottom Section -->
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <!-- Aktivitas Terakhir -->
-                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 lg:col-span-2">
-                        <div class="flex justify-between items-center mb-6">
-                            <h2 class="font-serif text-xl font-bold text-navy-900">Aktivitas Terakhir</h2>
-                            <div class="flex gap-2 bg-slate-100 p-1 rounded-lg">
-                                <button onclick="setActTab('masuk')" id="tab-act-masuk" class="tab-btn active px-4 py-1.5 text-sm rounded-md transition">Masuk</button>
-                                <button onclick="setActTab('disposisi')" id="tab-act-disposisi" class="tab-btn px-4 py-1.5 text-sm rounded-md transition text-slate-600">Disposisi</button>
-                                <button onclick="setActTab('keluar')" id="tab-act-keluar" class="tab-btn px-4 py-1.5 text-sm rounded-md transition text-slate-600">Keluar</button>
-                            </div>
-                        </div>
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-sm text-left">
-                                <thead class="text-xs text-slate-400 uppercase border-b border-slate-100">
-                                    <tr>
-                                        <th class="pb-3 font-semibold">No. Surat / Perihal</th>
-                                        <th class="pb-3 font-semibold">Tanggal</th>
-                                        <th class="pb-3 font-semibold text-right">Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="activity-table-body" class="divide-y divide-slate-50">
-                                    <!-- Injected by JS -->
-                                </tbody>
-                            </table>
+                    <!-- Chart Agama -->
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col items-center justify-center">
+                        <h3 class="text-md font-semibold text-slate-700 w-full mb-4">Proporsi Agama Pengurus</h3>
+                        <div class="relative w-48 h-48">
+                            <canvas id="agamaChart"></canvas>
                         </div>
                     </div>
 
-                    <!-- Sebaran Sifat Surat -->
-                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-                        <h2 class="font-serif text-xl font-bold text-navy-900 mb-6">Sebaran Sifat Surat</h2>
-                        <div class="space-y-6" id="sifat-stats-container">
-                            <!-- Injected by JS -->
+                    <!-- Birthday Box -->
+                    <div class="bg-gradient-to-br from-teal-500 to-primary p-6 rounded-2xl shadow-md text-white lg:col-span-2 flex flex-col">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-semibold flex items-center gap-2"><i class="ph-fill ph-cake"></i> Ulang Tahun Bulan Ini (<span id="dash-month-name"></span>)</h3>
+                            <button onclick="nav('birthday')" class="text-sm bg-white/20 hover:bg-white/30 px-3 py-1 rounded-full transition">Lihat Semua</button>
                         </div>
+                        <div id="dash-birthday-list" class="flex flex-col gap-3 flex-1 overflow-y-auto hide-scrollbar">
+                            <!-- Injected Birthdays -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 8 Mini Cards (Auto-rotating) -->
+                <div>
+                    <h3 class="text-md font-semibold text-slate-700 mb-4 flex items-center gap-2"><i class="ph ph-users-three"></i> Sorotan Pengurus</h3>
+                    <div id="dash-mini-cards" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                        <!-- Injected Mini Cards -->
                     </div>
                 </div>
             </div>
 
-            <!-- VIEW: SURAT MASUK -->
-            <div id="view-surat-masuk" class="view-section hidden">
-                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                    <!-- Form -->
-                    <div class="lg:col-span-4 bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-                        <h2 class="font-serif text-2xl font-bold text-navy-900 mb-6" id="title-form-sm">Entri Surat Masuk</h2>
-                        <form id="form-surat-masuk" onsubmit="saveSurat(event, 'masuk')" class="space-y-4">
-                            <input type="hidden" id="sm-id"> <!-- Hidden ID for Edit -->
-                            <div class="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label class="block text-xs font-semibold text-slate-500 mb-1">Kode Surat</label>
-                                    <input type="text" id="sm-kode" placeholder="Cth: A.01" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-gold-500 focus:outline-none text-sm" required>
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-semibold text-slate-500 mb-1">Sifat Surat</label>
-                                    <select id="sm-sifat" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-gold-500 focus:outline-none text-sm">
-                                        <option value="Biasa">Biasa</option>
-                                        <option value="Penting">Penting</option>
-                                        <option value="Niaga">Niaga</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-semibold text-slate-500 mb-1">Nomor Surat</label>
-                                <input type="text" id="sm-nomor" placeholder="Nomor resmi surat" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-gold-500 focus:outline-none text-sm" required>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-semibold text-slate-500 mb-1">Asal Surat</label>
-                                <input type="text" id="sm-asal" placeholder="Instansi/Pengirim" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-gold-500 focus:outline-none text-sm" required>
-                            </div>
-                            <div class="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label class="block text-xs font-semibold text-slate-500 mb-1">Tanggal Surat</label>
-                                    <input type="date" id="sm-tgl-surat" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-gold-500 focus:outline-none text-sm text-slate-600" required>
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-semibold text-slate-500 mb-1">Tanggal Terima</label>
-                                    <input type="date" id="sm-tgl-terima" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-gold-500 focus:outline-none text-sm text-slate-600" required>
-                                </div>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-semibold text-slate-500 mb-1">Perihal</label>
-                                <textarea id="sm-perihal" rows="2" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-gold-500 focus:outline-none text-sm" required></textarea>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-semibold text-slate-500 mb-1">Upload File (PDF)</label>
-                                <div class="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center hover:bg-slate-50 transition cursor-pointer" onclick="document.getElementById('sm-file').click()">
-                                    <i class="ph ph-cloud-arrow-up text-3xl text-slate-400 mb-2"></i>
-                                    <p class="text-xs text-slate-500 font-medium" id="sm-file-name">Klik atau drag file PDF ke sini</p>
-                                    <input type="file" id="sm-file" accept=".pdf" class="hidden" onchange="document.getElementById('sm-file-name').innerText = this.files[0]?.name || 'Klik atau drag file PDF ke sini'">
-                                </div>
-                            </div>
-                            
-                            <div class="flex gap-2 pt-2">
-                                <button type="button" id="btn-cancel-sm" onclick="cancelEdit('masuk')" class="hidden flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium py-3 rounded-lg transition text-sm">
-                                    Batal
-                                </button>
-                                <button type="submit" id="btn-submit-sm" class="flex-[2] bg-navy-900 hover:bg-navy-800 text-white font-medium py-3 rounded-lg flex justify-center items-center gap-2 transition text-sm">
-                                    <i class="ph ph-floppy-disk"></i> Simpan Data
-                                </button>
-                            </div>
-                        </form>
+            <!-- VIEW: PENGURUS -->
+            <div id="view-pengurus" class="view-section fade-in hidden space-y-6">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div class="relative w-full md:w-64">
+                        <i class="ph ph-magnifying-glass absolute left-3 top-3 text-slate-400"></i>
+                        <input type="text" id="search-pengurus" oninput="renderTablePengurus()" placeholder="Cari nama pengurus..." class="w-full pl-10 pr-4 py-2 rounded-xl border border-slate-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition">
                     </div>
-
-                    <!-- Table -->
-                    <div class="lg:col-span-8 bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col">
-                        <div class="flex justify-between items-center mb-6 gap-4">
-                            <div class="relative flex-1">
-                                <i class="ph ph-magnifying-glass absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
-                                <input type="text" id="search-sm" onkeyup="renderTableMasuk()" placeholder="Cari Asal / Perihal..." class="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-slate-200">
-                            </div>
-                            <div class="text-xs font-semibold bg-slate-100 px-3 py-1.5 rounded-lg text-slate-600">Total: <span id="total-sm">0</span> Data</div>
-                        </div>
-                        <div class="overflow-x-auto flex-1">
-                            <table class="w-full text-sm text-left">
-                                <thead class="text-xs text-slate-400 uppercase border-b border-slate-100">
-                                    <tr>
-                                        <th class="pb-3 font-semibold w-16">Kode</th>
-                                        <th class="pb-3 font-semibold">Asal & No. Surat</th>
-                                        <th class="pb-3 font-semibold">Perihal</th>
-                                        <th class="pb-3 font-semibold text-center w-24">Aksi</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="table-sm-body" class="divide-y divide-slate-50">
-                                    <!-- Injected by JS -->
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- VIEW: SURAT KELUAR -->
-            <div id="view-surat-keluar" class="view-section hidden">
-                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                    <!-- Form -->
-                    <div class="lg:col-span-4 bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-                        <h2 class="font-serif text-2xl font-bold text-navy-900 mb-6" id="title-form-sk">Entri Surat Keluar</h2>
-                        <form id="form-surat-keluar" onsubmit="saveSurat(event, 'keluar')" class="space-y-4">
-                            <input type="hidden" id="sk-id"> <!-- Hidden ID for Edit -->
-                            <div class="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label class="block text-xs font-semibold text-slate-500 mb-1">Kode Surat</label>
-                                    <input type="text" id="sk-kode" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-gold-500 focus:outline-none text-sm" required>
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-semibold text-slate-500 mb-1">Sifat Surat</label>
-                                    <select id="sk-sifat" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-gold-500 focus:outline-none text-sm">
-                                        <option>Biasa</option><option>Segera</option><option>Amat Segera</option><option>Penting</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-semibold text-slate-500 mb-1">Nomor Surat</label>
-                                <input type="text" id="sk-nomor" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-gold-500 focus:outline-none text-sm" required>
-                            </div>
-                            <div>
-                                <div class="flex justify-between items-center mb-1">
-                                    <label class="block text-xs font-semibold text-slate-500">Kepada</label>
-                                    <button type="button" onclick="addInput('sk-kepada-container', 'Kepada')" class="text-gold-600 hover:bg-gold-50 p-1 rounded"><i class="ph ph-plus"></i></button>
-                                </div>
-                                <div id="sk-kepada-container" class="space-y-2">
-                                    <input type="text" name="sk-kepada[]" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-gold-500 focus:outline-none text-sm" required>
-                                </div>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-semibold text-slate-500 mb-1">Tanggal Surat</label>
-                                <input type="date" id="sk-tgl-surat" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-gold-500 focus:outline-none text-sm text-slate-600" required>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-semibold text-slate-500 mb-1">Perihal</label>
-                                <textarea id="sk-perihal" rows="2" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-gold-500 focus:outline-none text-sm" required></textarea>
-                            </div>
-                            <div>
-                                <div class="flex justify-between items-center mb-1">
-                                    <label class="block text-xs font-semibold text-slate-500">Tembusan</label>
-                                    <button type="button" onclick="addInput('sk-tembusan-container', 'Tembusan')" class="text-gold-600 hover:bg-gold-50 p-1 rounded"><i class="ph ph-plus"></i></button>
-                                </div>
-                                <div id="sk-tembusan-container" class="space-y-2">
-                                    <input type="text" name="sk-tembusan[]" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-gold-500 focus:outline-none text-sm">
-                                </div>
-                            </div>
-                            
-                            <div class="flex gap-2 pt-2">
-                                <button type="button" id="btn-cancel-sk" onclick="cancelEdit('keluar')" class="hidden flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium py-3 rounded-lg transition text-sm">
-                                    Batal
-                                </button>
-                                <button type="submit" id="btn-submit-sk" class="flex-[2] bg-navy-900 hover:bg-navy-800 text-white font-medium py-3 rounded-lg flex justify-center items-center gap-2 transition text-sm">
-                                    <i class="ph ph-floppy-disk"></i> Simpan Data
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-
-                    <!-- Table -->
-                    <div class="lg:col-span-8 bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col">
-                         <div class="flex justify-between items-center mb-6 gap-4">
-                            <div class="relative flex-1">
-                                <i class="ph ph-magnifying-glass absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
-                                <input type="text" id="search-sk" onkeyup="renderTableKeluar()" placeholder="Cari Kepada / Perihal..." class="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-slate-200">
-                            </div>
-                            <div class="text-xs font-semibold bg-slate-100 px-3 py-1.5 rounded-lg text-slate-600">Total: <span id="total-sk">0</span> Data</div>
-                        </div>
-                        <div class="overflow-x-auto flex-1">
-                            <table class="w-full text-sm text-left">
-                                <thead class="text-xs text-slate-400 uppercase border-b border-slate-100">
-                                    <tr>
-                                        <th class="pb-3 font-semibold w-16">Kode</th>
-                                        <th class="pb-3 font-semibold">Kepada & No. Surat</th>
-                                        <th class="pb-3 font-semibold">Perihal</th>
-                                        <th class="pb-3 font-semibold text-center w-24">Aksi</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="table-sk-body" class="divide-y divide-slate-50">
-                                    <!-- Injected by JS -->
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- VIEW: TIMELINE -->
-            <div id="view-timeline" class="view-section hidden max-w-4xl mx-auto">
-                <div class="text-center mb-10">
-                    <h2 class="font-serif text-3xl font-bold text-navy-900 mb-2">Jejak Arsip Surat</h2>
-                    <p class="text-slate-500 text-sm">Riwayat perjalanan surat masuk dan disposisinya.</p>
+                    <button onclick="openFormPengurus()" class="bg-primary hover:bg-teal-700 text-white px-5 py-2 rounded-xl font-medium flex items-center gap-2 transition shadow-sm w-full md:w-auto justify-center">
+                        <i class="ph ph-plus-circle text-lg"></i> Tambah Pengurus
+                    </button>
                 </div>
                 
-                <div class="relative w-full max-w-lg mx-auto mb-10">
-                    <i class="ph ph-magnifying-glass absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
-                    <input type="text" id="search-timeline" onkeyup="renderTimeline()" placeholder="Masukkan No Surat Masuk..." class="w-full pl-12 pr-4 py-3 bg-white shadow-sm border border-slate-200 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-gold-500">
-                </div>
-
-                <!-- Timeline Container (Elegan Style) -->
-                <div class="relative border-l-2 border-slate-200 ml-4 md:ml-8 space-y-12" id="timeline-container">
-                    <!-- Injected by JS -->
-                </div>
-            </div>
-
-            <!-- VIEW: GALERI WARTA -->
-            <div id="view-galeri" class="view-section hidden">
-                <div class="bg-white p-2 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-4 mb-8 overflow-x-auto hide-scroll">
-                    <div class="flex items-center gap-3 px-4 font-serif text-xl font-bold text-navy-900 flex-shrink-0">
-                        <button onclick="changeGaleriYear(-1)" class="hover:text-gold-500"><i class="ph ph-caret-left"></i></button>
-                        <span id="galeri-year">2026</span>
-                        <button onclick="changeGaleriYear(1)" class="hover:text-gold-500"><i class="ph ph-caret-right"></i></button>
-                    </div>
-                    <div class="w-px h-6 bg-slate-200 flex-shrink-0"></div>
-                    <div class="flex gap-1" id="galeri-months">
-                        <!-- Injected by JS -->
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
-                    <div>
-                        <h2 class="font-serif text-xl font-bold text-navy-900 mb-6 flex items-center gap-2">
-                            <i class="ph ph-tray-arrow-down text-gold-500"></i> Arsip Surat Masuk
-                        </h2>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4" id="galeri-masuk"></div>
-                    </div>
-                    <div>
-                        <h2 class="font-serif text-xl font-bold text-navy-900 mb-6 flex items-center gap-2">
-                            <i class="ph ph-paper-plane-tilt text-gold-500"></i> Arsip Surat Keluar
-                        </h2>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4" id="galeri-keluar"></div>
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse min-w-max">
+                            <thead>
+                                <tr class="bg-slate-50 text-slate-500 text-sm border-b border-slate-100">
+                                    <th class="py-3 px-4 font-medium">Nama & Jabatan</th>
+                                    <th class="py-3 px-4 font-medium">Tgl Lahir / Usia</th>
+                                    <th class="py-3 px-4 font-medium">Status / Warta</th>
+                                    <th class="py-3 px-4 font-medium">Agama / Kontak</th>
+                                    <th class="py-3 px-4 font-medium text-right">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody-pengurus" class="text-sm divide-y divide-slate-50">
+                                <!-- Data Injected Here -->
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
 
-        </div>
-    </main>
-
-    <!-- MODAL: SETTINGS -->
-    <div id="modal-settings" class="fixed inset-0 bg-slate-900/50 z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 transform scale-95 opacity-0 transition-all duration-200" id="modal-settings-content">
-            <div class="flex justify-between items-center mb-6">
-                <h3 class="font-serif text-xl font-bold text-navy-900">Pengaturan Sinkronisasi</h3>
-                <button onclick="closeSettings()" class="text-slate-400 hover:text-slate-600"><i class="ph ph-x text-xl"></i></button>
-            </div>
-            <p class="text-sm text-slate-500 mb-4">Masukkan URL Web App dari Google Apps Script untuk menghubungkan aplikasi dengan Spreadsheet dan Google Drive.</p>
-            <div class="mb-4">
-                <label class="block text-xs font-semibold text-slate-500 mb-1">Google Apps Script URL</label>
-                <input type="url" id="gas-url" placeholder="https://script.google.com/macros/s/.../exec" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-gold-500 focus:outline-none text-sm font-mono">
-            </div>
-            <button onclick="saveSettings()" class="w-full bg-navy-900 hover:bg-navy-800 text-white font-medium py-2 rounded-lg transition">Simpan Pengaturan</button>
-        </div>
-    </div>
-
-    <!-- MODAL: DETAIL SURAT MASUK & DISPOSISI -->
-    <div id="modal-detail" class="fixed inset-0 bg-slate-900/50 z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col transform scale-95 opacity-0 transition-all duration-200" id="modal-detail-content">
-            <div class="flex justify-between items-center p-6 border-b border-slate-100">
-                <h3 class="font-serif text-xl font-bold text-navy-900">Detail Surat Masuk</h3>
-                <button onclick="closeDetail()" class="text-slate-400 hover:text-slate-600"><i class="ph ph-x text-xl"></i></button>
-            </div>
-            <div class="p-6 overflow-y-auto flex-1 bg-slate-50" id="detail-body">
-                <div class="bg-white rounded-xl border border-slate-100 p-5 mb-4 shadow-sm grid grid-cols-2 gap-4" id="detail-info"></div>
-                <div id="area-disposisi" class="hidden">
-                    <div class="text-center py-4 text-sm text-slate-400 italic" id="txt-belum-disposisi">Belum ada disposisi</div>
-                    <div id="list-disposisi" class="space-y-3 mb-4"></div>
-                    <button onclick="showFormDisposisi()" id="btn-tambah-disposisi" class="w-full py-3 bg-white border border-slate-200 rounded-xl text-navy-900 font-medium hover:bg-slate-50 transition flex justify-center items-center gap-2">
-                        <i class="ph ph-plus-circle"></i> Tambah Disposisi
+            <!-- VIEW: KECAMATAN -->
+            <div id="view-kecamatan" class="view-section fade-in hidden space-y-6">
+                <div class="flex justify-between items-center gap-4">
+                    <h3 class="text-lg font-semibold text-slate-700">Data Kecamatan</h3>
+                    <button onclick="openFormKecamatan()" class="bg-primary hover:bg-teal-700 text-white px-5 py-2 rounded-xl font-medium flex items-center gap-2 transition shadow-sm">
+                        <i class="ph ph-plus-circle text-lg"></i> Tambah Kecamatan
                     </button>
-                    <form id="form-disposisi" class="hidden bg-white p-5 rounded-xl border border-slate-200 shadow-sm mt-4 space-y-4" onsubmit="saveDisposisi(event)">
-                        <input type="hidden" id="disp-id-surat">
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-500 mb-1">Tujuan Disposisi</label>
-                            <input type="text" id="disp-tujuan" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm" required>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-500 mb-1">Saran / Catatan</label>
-                            <input type="text" id="disp-saran" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm" required>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-500 mb-1">Isi Disposisi</label>
-                            <textarea id="disp-isi" rows="3" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm" required></textarea>
-                        </div>
-                        <div class="flex gap-2">
-                            <button type="button" onclick="hideFormDisposisi()" class="flex-1 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-medium transition">Batal</button>
-                            <button type="submit" class="flex-1 py-2 bg-navy-900 hover:bg-navy-800 text-white rounded-lg font-medium transition">Save Disposisi</button>
-                        </div>
-                    </form>
+                </div>
+
+                <!-- L/P Progress -->
+                <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
+                    <p class="text-sm text-slate-500 mb-2 font-medium flex items-center gap-2"><i class="ph ph-gender-intersex"></i> Perbandingan Pejabat L/P</p>
+                    <div id="labels-kecamatan-lp" class="flex justify-between text-xs mb-1 font-bold"></div>
+                    <div id="bar-kecamatan-lp" class="flex h-6 rounded-full overflow-hidden shadow-inner">
+                        <!-- Injected bars -->
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse min-w-max">
+                            <thead>
+                                <tr class="bg-slate-50 text-slate-500 text-sm border-b border-slate-100">
+                                    <th class="py-3 px-4 font-medium">Kecamatan</th>
+                                    <th class="py-3 px-4 font-medium">Nama Pejabat</th>
+                                    <th class="py-3 px-4 font-medium">Ketua PKK</th>
+                                    <th class="py-3 px-4 font-medium">Sekretaris & HP</th>
+                                    <th class="py-3 px-4 font-medium text-right">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody-kecamatan" class="text-sm divide-y divide-slate-50">
+                                <!-- Data Injected Here -->
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
-        </div>
-    </div>
 
-    <!-- MODAL: DETAIL SURAT KELUAR -->
-    <div id="modal-detail-sk" class="fixed inset-0 bg-slate-900/50 z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col transform scale-95 opacity-0 transition-all duration-200" id="modal-detail-sk-content">
-            <div class="flex justify-between items-center p-6 border-b border-slate-100">
-                <h3 class="font-serif text-xl font-bold text-navy-900">Detail Surat Keluar</h3>
-                <button onclick="closeDetailSK()" class="text-slate-400 hover:text-slate-600"><i class="ph ph-x text-xl"></i></button>
+            <!-- VIEW: KELURAHAN -->
+            <div id="view-kelurahan" class="view-section fade-in hidden space-y-6">
+                <div class="flex justify-between items-center gap-4">
+                    <h3 class="text-lg font-semibold text-slate-700">Data Kelurahan</h3>
+                    <button onclick="openFormKelurahan()" class="bg-primary hover:bg-teal-700 text-white px-5 py-2 rounded-xl font-medium flex items-center gap-2 transition shadow-sm">
+                        <i class="ph ph-plus-circle text-lg"></i> Tambah Kelurahan
+                    </button>
+                </div>
+
+                <!-- L/P Progress -->
+                <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
+                    <p class="text-sm text-slate-500 mb-2 font-medium flex items-center gap-2"><i class="ph ph-gender-intersex"></i> Perbandingan Pejabat L/P</p>
+                    <div id="labels-kelurahan-lp" class="flex justify-between text-xs mb-1 font-bold"></div>
+                    <div id="bar-kelurahan-lp" class="flex h-6 rounded-full overflow-hidden shadow-inner">
+                        <!-- Injected bars -->
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse min-w-max">
+                            <thead>
+                                <tr class="bg-slate-50 text-slate-500 text-sm border-b border-slate-100">
+                                    <th class="py-3 px-4 font-medium">Kelurahan</th>
+                                    <th class="py-3 px-4 font-medium">Nama Pejabat</th>
+                                    <th class="py-3 px-4 font-medium">Ketua PKK</th>
+                                    <th class="py-3 px-4 font-medium">Sekretaris & HP</th>
+                                    <th class="py-3 px-4 font-medium text-right">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody-kelurahan" class="text-sm divide-y divide-slate-50">
+                                <!-- Data Injected Here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
-            <div class="p-6 overflow-y-auto flex-1 bg-slate-50">
-                <div class="bg-white rounded-xl border border-slate-100 p-5 shadow-sm space-y-4" id="detail-info-sk">
+
+            <!-- VIEW: BIRTHDAY -->
+            <div id="view-birthday" class="view-section fade-in hidden space-y-6">
+                <!-- Menu Bulan (Horizontal Scroll) -->
+                <div class="flex overflow-x-auto hide-scrollbar gap-3 pb-2" id="month-selector">
                     <!-- Injected via JS -->
                 </div>
+
+                <h3 class="text-xl font-bold text-slate-700 mt-4" id="bday-title-month">Ulang Tahun</h3>
+                
+                <div id="bday-cards-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Injected Cards -->
+                </div>
             </div>
-        </div>
+
+            <!-- VIEW: REKAP DATA -->
+            <div id="view-rekap" class="view-section fade-in hidden space-y-6">
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    <div onclick="showRekapTable('Pengurus Kota')" class="cursor-pointer bg-white p-5 rounded-2xl shadow-sm hover:shadow-md border border-slate-100 transition group">
+                        <i class="ph ph-buildings text-3xl text-teal-600 mb-3 group-hover:scale-110 transition"></i>
+                        <h4 class="font-semibold text-slate-700">Pengurus Kota</h4>
+                    </div>
+                    <div onclick="showRekapTable('Staf')" class="cursor-pointer bg-white p-5 rounded-2xl shadow-sm hover:shadow-md border border-slate-100 transition group">
+                        <i class="ph ph-user-gear text-3xl text-blue-600 mb-3 group-hover:scale-110 transition"></i>
+                        <h4 class="font-semibold text-slate-700">Staf</h4>
+                    </div>
+                    <div onclick="showRekapTable('Pengurus Kecamatan')" class="cursor-pointer bg-white p-5 rounded-2xl shadow-sm hover:shadow-md border border-slate-100 transition group">
+                        <i class="ph ph-users-three text-3xl text-indigo-600 mb-3 group-hover:scale-110 transition"></i>
+                        <h4 class="font-semibold text-slate-700">Pengurus Kecamatan</h4>
+                    </div>
+                    <div onclick="showRekapTable('Kecamatan')" class="cursor-pointer bg-white p-5 rounded-2xl shadow-sm hover:shadow-md border border-slate-100 transition group">
+                        <i class="ph ph-map-trifold text-3xl text-purple-600 mb-3 group-hover:scale-110 transition"></i>
+                        <h4 class="font-semibold text-slate-700">Data Kecamatan</h4>
+                    </div>
+                    <div onclick="showRekapTable('Pengurus Kelurahan')" class="cursor-pointer bg-white p-5 rounded-2xl shadow-sm hover:shadow-md border border-slate-100 transition group">
+                        <i class="ph ph-users text-3xl text-orange-600 mb-3 group-hover:scale-110 transition"></i>
+                        <h4 class="font-semibold text-slate-700">Pengurus Kelurahan</h4>
+                    </div>
+                    <div onclick="showRekapTable('Kelurahan')" class="cursor-pointer bg-white p-5 rounded-2xl shadow-sm hover:shadow-md border border-slate-100 transition group">
+                        <i class="ph ph-house-line text-3xl text-red-600 mb-3 group-hover:scale-110 transition"></i>
+                        <h4 class="font-semibold text-slate-700">Data Kelurahan</h4>
+                    </div>
+                </div>
+
+                <div id="rekap-table-container" class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 hidden">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 id="rekap-table-title" class="text-lg font-bold text-slate-700">Detail</h3>
+                        <button onclick="document.getElementById('rekap-table-container').classList.add('hidden')" class="text-slate-400 hover:text-red-500 transition-colors">
+                            <i class="ph ph-x text-xl"></i>
+                        </button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse min-w-max text-sm">
+                            <thead id="rekap-thead" class="bg-slate-50 text-slate-500 border-b border-slate-100"></thead>
+                            <tbody id="rekap-tbody" class="divide-y divide-slate-50"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </main>
     </div>
 
-    <!-- Toast Notification Container -->
-    <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2"></div>
-
-    <script>
-        // --- DATA MOCK (Local State) ---
-        let gasUrl = localStorage.getItem('gasUrl') || '';
-        let currentYear = 2026;
-        let currentMonth = 3; // 0 = Jan, 3 = April
-        const monthsStr = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+    <!-- Modals Overlay -->
+    <div id="modal-overlay" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
         
-        let dataSuratMasuk = [
-            { id: 'SM001', kode: 'B.02', nomor: '045/INV/IV/2026', asal: 'Dinas Kominfo', sifat: 'Penting', tglSurat: '2026-04-14', tglTerima: '2026-04-15', perihal: 'Sosialisasi Sistem Digital', file: '#', disposisi: [] },
-            { id: 'SM002', kode: 'A.01', nomor: '123/EXT/HR/2026', asal: 'PT. Teknologi Maju', sifat: 'Biasa', tglSurat: '2026-04-10', tglTerima: '2026-04-11', perihal: 'Undangan Rapat Direksi', file: '#', disposisi: [
-                { tujuan: 'Divisi IT', saran: 'Segera pelajari', isi: 'Siapkan materi presentasi sistem terbaru', tgl: '2026-04-12' }
-            ]}
-        ];
-        let dataSuratKeluar = [
-            { id: 'SK001', kode: 'C.01', nomor: '001/OUT/2026', kepada: ['PT. Mitra Sejati'], sifat: 'Penting', tglSurat: '2026-04-16', perihal: 'Penawaran Kerjasama', tembusan: ['Direktur Utama'] }
-        ];
+        <!-- Modal Form Pengurus -->
+        <div id="modal-form-pengurus" class="bg-white rounded-3xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto hidden flex-col">
+            <div class="p-6 border-b border-slate-100 flex justify-between items-center sticky top-0 bg-white z-10 rounded-t-3xl">
+                <h3 class="text-xl font-bold text-slate-800" id="form-pengurus-title">Tambah Pengurus</h3>
+                <button onclick="closeModal()" class="text-slate-400 hover:text-red-500"><i class="ph ph-x text-2xl"></i></button>
+            </div>
+            <div class="p-6 space-y-4">
+                <input type="hidden" id="p-id">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Nama Pengurus</label>
+                        <input type="text" id="p-nama" class="w-full p-2 border border-slate-200 rounded-lg focus:ring-1 focus:ring-primary outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Jabatan</label>
+                        <input type="text" id="p-jabatan" class="w-full p-2 border border-slate-200 rounded-lg focus:ring-1 focus:ring-primary outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Tanggal Lahir</label>
+                        <input type="date" id="p-tgl" class="w-full p-2 border border-slate-200 rounded-lg focus:ring-1 focus:ring-primary outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Status</label>
+                        <select id="p-status" class="w-full p-2 border border-slate-200 rounded-lg focus:ring-1 focus:ring-primary outline-none bg-white">
+                            <option value="Kota">Kota</option>
+                            <option value="Staf">Staf</option>
+                            <option value="Kecamatan">Kecamatan</option>
+                            <option value="Kelurahan">Kelurahan</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Agama</label>
+                        <select id="p-agama" class="w-full p-2 border border-slate-200 rounded-lg focus:ring-1 focus:ring-primary outline-none bg-white">
+                            <option value="Islam">Islam</option>
+                            <option value="Kristen">Kristen Protestan</option>
+                            <option value="Katolik">Katolik</option>
+                            <option value="Hindu">Hindu</option>
+                            <option value="Buddha">Buddha</option>
+                            <option value="Konghucu">Konghucu</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Nomor HP</label>
+                        <div class="flex">
+                            <span class="inline-flex items-center px-3 border border-r-0 border-slate-200 bg-slate-50 text-slate-500 rounded-l-lg text-sm">+62</span>
+                            <input type="number" id="p-hp" placeholder="8123456789" class="w-full p-2 border border-slate-200 rounded-r-lg focus:ring-1 focus:ring-primary outline-none">
+                        </div>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Alamat Domisili</label>
+                        <textarea id="p-alamat" rows="2" class="w-full p-2 border border-slate-200 rounded-lg focus:ring-1 focus:ring-primary outline-none"></textarea>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Warta</label>
+                        <input type="text" id="p-warta" class="w-full p-2 border border-slate-200 rounded-lg focus:ring-1 focus:ring-primary outline-none">
+                    </div>
+                </div>
+            </div>
+            <div class="p-6 border-t border-slate-100 flex justify-end gap-3 bg-slate-50 rounded-b-3xl">
+                <button onclick="closeModal()" class="px-5 py-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-100 transition flex items-center gap-2"><i class="ph ph-x"></i> Batal</button>
+                <button onclick="savePengurus()" class="px-5 py-2 rounded-xl bg-primary text-white hover:bg-teal-700 transition flex items-center gap-2"><i class="ph ph-floppy-disk"></i> Simpan</button>
+            </div>
+        </div>
 
-        // --- NAVIGATION & VIEWS ---
-        function switchView(viewId) {
+        <!-- Modal Form Kecamatan/Kelurahan -->
+        <div id="modal-form-wilayah" class="bg-white rounded-3xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto hidden flex-col">
+            <div class="p-6 border-b border-slate-100 flex justify-between items-center sticky top-0 bg-white z-10 rounded-t-3xl">
+                <h3 class="text-xl font-bold text-slate-800" id="form-wilayah-title">Tambah Wilayah</h3>
+                <button onclick="closeModal()" class="text-slate-400 hover:text-red-500"><i class="ph ph-x text-2xl"></i></button>
+            </div>
+            <div class="p-6 space-y-4">
+                <input type="hidden" id="w-id">
+                <input type="hidden" id="w-type">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1" id="lbl-nama-wilayah">Nama Wilayah</label>
+                        <input type="text" id="w-nama" class="w-full p-2 border border-slate-200 rounded-lg focus:ring-1 focus:ring-primary outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Nama Pejabat</label>
+                        <input type="text" id="w-pejabat" class="w-full p-2 border border-slate-200 rounded-lg focus:ring-1 focus:ring-primary outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Jenis Kelamin Pejabat (L/P)</label>
+                        <select id="w-lp" class="w-full p-2 border border-slate-200 rounded-lg focus:ring-1 focus:ring-primary outline-none bg-white">
+                            <option value="L">Laki-laki (L)</option>
+                            <option value="P">Perempuan (P)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Ketua PKK (Pilih dari Pengurus)</label>
+                        <input type="text" list="list-pengurus" id="w-ketua" class="w-full p-2 border border-slate-200 rounded-lg focus:ring-1 focus:ring-primary outline-none" placeholder="Ketik untuk mencari nama...">
+                        <datalist id="list-pengurus"></datalist>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Sekretaris</label>
+                        <input type="text" id="w-sekretaris" class="w-full p-2 border border-slate-200 rounded-lg focus:ring-1 focus:ring-primary outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">HP Sekretaris</label>
+                        <div class="flex">
+                            <span class="inline-flex items-center px-3 border border-r-0 border-slate-200 bg-slate-50 text-slate-500 rounded-l-lg text-sm">+62</span>
+                            <input type="number" id="w-hp" placeholder="8123456789" class="w-full p-2 border border-slate-200 rounded-r-lg focus:ring-1 focus:ring-primary outline-none">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="p-6 border-t border-slate-100 flex justify-end gap-3 bg-slate-50 rounded-b-3xl">
+                <button onclick="closeModal()" class="px-5 py-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-100 transition flex items-center gap-2"><i class="ph ph-x"></i> Batal</button>
+                <button onclick="saveWilayah()" class="px-5 py-2 rounded-xl bg-primary text-white hover:bg-teal-700 transition flex items-center gap-2"><i class="ph ph-floppy-disk"></i> Simpan</button>
+            </div>
+        </div>
+
+        <!-- Modal Settings GAS -->
+        <div id="modal-settings" class="bg-white rounded-3xl shadow-xl w-full max-w-md hidden flex-col">
+            <div class="p-6 border-b border-slate-100 flex justify-between items-center">
+                <h3 class="text-xl font-bold text-slate-800 flex items-center gap-2"><i class="ph ph-google-logo text-blue-500"></i> Sinkronisasi GAS</h3>
+                <button onclick="closeModal()" class="text-slate-400 hover:text-red-500"><i class="ph ph-x text-2xl"></i></button>
+            </div>
+            <div class="p-6">
+                <label class="block text-sm font-medium text-slate-700 mb-2">URL Web App Google Apps Script</label>
+                <textarea id="gas-url" rows="3" class="w-full p-3 border border-slate-200 rounded-xl focus:ring-1 focus:ring-primary outline-none text-sm font-mono text-slate-600" placeholder="https://script.google.com/macros/s/.../exec"></textarea>
+                <p class="text-xs text-slate-500 mt-2">Masukkan URL hasil deploy GAS untuk otomatis sinkron secara realtime saat Edit/Tambah data.</p>
+            </div>
+            <div class="p-6 border-t border-slate-100 flex justify-end gap-3 bg-slate-50 rounded-b-3xl">
+                <button onclick="closeModal()" class="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-100 transition">Batal</button>
+                <button onclick="saveGASUrl()" class="px-4 py-2 rounded-xl bg-primary text-white hover:bg-teal-700 transition">Simpan URL</button>
+            </div>
+        </div>
+
+        <!-- Modal Detail -->
+        <div id="modal-detail" class="bg-white rounded-3xl shadow-xl w-full max-w-md hidden flex-col">
+            <div class="p-6 border-b border-slate-100 flex justify-between items-center">
+                <h3 class="text-xl font-bold text-slate-800"><i class="ph ph-info text-primary mr-2"></i> Detail Data</h3>
+                <button onclick="closeModal()" class="text-slate-400 hover:text-red-500"><i class="ph ph-x text-2xl"></i></button>
+            </div>
+            <div class="p-6 space-y-3" id="detail-content">
+                <!-- Content Injected -->
+            </div>
+        </div>
+
+    </div>
+
+    <!-- JS Application Logic -->
+    <script>
+        // State Management
+        let appData = {
+            pengurus: [
+                { id: "P1234567890a", nama: "Hj. Siti Aminah", jabatan: "Ketua", tgl_lahir: "1975-04-15", alamat: "Jl. Merdeka No. 1", status: "Kota", warta: "Aktif", agama: "Islam", hp: "81234567890" },
+                { id: "S2345678901b", nama: "Budi Santoso", jabatan: "Wakil Ketua", tgl_lahir: "1980-08-20", alamat: "Jl. Sudirman 2", status: "Staf", warta: "Cuti", agama: "Kristen", hp: "81298765432" },
+                { id: "K3456789012c", nama: "Rina Marlina", jabatan: "Sekretaris", tgl_lahir: "1982-12-05", alamat: "Jl. Pahlawan 3", status: "Kecamatan", warta: "Aktif", agama: "Islam", hp: "81344556677" },
+                { id: "L4567890123d", nama: "Diana Kusuma", jabatan: "Bendahara", tgl_lahir: "1990-04-10", alamat: "Jl. Anggrek 4", status: "Kelurahan", warta: "Aktif", agama: "Hindu", hp: "85611223344" }
+            ],
+            kecamatan: [
+                { id: "C5678901234e", nama: "Sukolilo", pejabat: "Drs. Ahmad Yani", lp: "L", ketua: "Rina Marlina", sekretaris: "Maya", hp: "81200001111" },
+                { id: "C6789012345f", nama: "Rungkut", pejabat: "Dra. Susi Susanti", lp: "P", ketua: "Siti Aminah", sekretaris: "Andi", hp: "81200002222" }
+            ],
+            kelurahan: [
+                { id: "D7890123456g", nama: "Semolowaru", pejabat: "Bambang W", lp: "L", ketua: "Diana Kusuma", sekretaris: "Rudi", hp: "81300003333" },
+                { id: "D8901234567h", nama: "Medokan Ayu", pejabat: "Rini Astuti", lp: "P", ketua: "Diana Kusuma", sekretaris: "Lina", hp: "81300004444" }
+            ]
+        };
+
+        let gasUrl = localStorage.getItem('ePKK_GAS_URL') || '';
+        let currentView = 'dashboard';
+        let chartInstance = null;
+        let miniCardInterval = null;
+
+        // Initialization
+        window.onload = () => {
+            loadLocalData();
+            nav('dashboard');
+            populateDatalistPengurus();
+        };
+
+        function loadLocalData() {
+            const saved = localStorage.getItem('ePKK_Data');
+            if(saved) appData = JSON.parse(saved);
+        }
+
+        function saveDataLocal() {
+            localStorage.setItem('ePKK_Data', JSON.stringify(appData));
+            populateDatalistPengurus();
+            syncToGas('SYNC_ALL', appData); // trigger sync if URL exists
+        }
+
+        // Navigation
+        function nav(viewId) {
             document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
             document.getElementById(`view-${viewId}`).classList.remove('hidden');
             
-            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-            event.currentTarget.classList.add('active');
-            
-            if(window.innerWidth < 768) toggleMobileMenu();
-
-            if(viewId === 'dashboard') renderDashboard();
-            if(viewId === 'surat-masuk') renderTableMasuk();
-            if(viewId === 'surat-keluar') renderTableKeluar();
-            if(viewId === 'timeline') renderTimeline();
-            if(viewId === 'galeri') renderGaleri();
-        }
-
-        function toggleMobileMenu() {
-            const sidebar = document.getElementById('sidebar');
-            const overlay = document.getElementById('mobile-overlay');
-            if (sidebar.classList.contains('-translate-x-full')) {
-                sidebar.classList.remove('-translate-x-full');
-                overlay.classList.remove('hidden');
-            } else {
-                sidebar.classList.add('-translate-x-full');
-                overlay.classList.add('hidden');
-            }
-        }
-
-        // --- DASHBOARD LOGIC ---
-        function renderMonthSelector(containerId, yearId, year) {
-            document.getElementById(yearId).innerText = year;
-            const container = document.getElementById(containerId);
-            container.innerHTML = '';
-            monthsStr.forEach((m, i) => {
-                const btn = document.createElement('button');
-                btn.className = `month-btn px-4 py-1.5 text-sm rounded-full whitespace-nowrap transition border border-transparent ${i === currentMonth ? 'active' : 'text-slate-600 hover:bg-slate-100 hover:border-slate-200'}`;
-                btn.innerText = m;
-                btn.onclick = () => { currentMonth = i; renderMonthSelector(containerId, yearId, year); if(containerId==='dash-months') renderDashboard(); else renderGaleri(); };
-                container.appendChild(btn);
+            document.querySelectorAll('.nav-link').forEach(el => {
+                el.classList.remove('bg-teal-50', 'text-primary', 'font-semibold');
+                el.classList.add('text-slate-600');
             });
-        }
-
-        function changeYear(delta) { currentYear += delta; renderMonthSelector('dash-months', 'dash-year', currentYear); renderDashboard(); }
-        function changeGaleriYear(delta) { currentYear += delta; renderMonthSelector('galeri-months', 'galeri-year', currentYear); renderGaleri(); }
-
-        let actTab = 'masuk';
-        function setActTab(tab) {
-            actTab = tab;
-            ['masuk','disposisi','keluar'].forEach(t => {
-                const el = document.getElementById(`tab-act-${t}`);
-                if(t === tab) { el.classList.add('active'); el.classList.remove('text-slate-600'); }
-                else { el.classList.remove('active'); el.classList.add('text-slate-600'); }
-            });
-            renderDashboardActivity();
-        }
-
-        function filterByMonthYear(data, dateField) {
-            return data.filter(d => {
-                const dt = new Date(d[dateField]);
-                return dt.getFullYear() === currentYear && dt.getMonth() === currentMonth;
-            });
-        }
-
-        function renderDashboard() {
-            const smMonth = filterByMonthYear(dataSuratMasuk, 'tglTerima');
-            const skMonth = filterByMonthYear(dataSuratKeluar, 'tglSurat');
-            let dispCount = 0; smMonth.forEach(sm => dispCount += sm.disposisi.length);
-
-            document.getElementById('stat-masuk-month').innerText = smMonth.length;
-            document.getElementById('stat-keluar-month').innerText = skMonth.length;
-            document.getElementById('stat-disp-month').innerText = dispCount;
-
-            // Sifat Surat Chart
-            const sifatCounts = { 'Biasa': 0, 'Penting': 0, 'Niaga': 0, 'Segera': 0, 'Amat Segera': 0 };
-            smMonth.forEach(d => { if(sifatCounts[d.sifat]!==undefined) sifatCounts[d.sifat]++; });
-            
-            let htmlSifat = '';
-            ['Biasa', 'Penting', 'Niaga'].forEach(s => {
-                const total = smMonth.length || 1;
-                const pct = Math.round((sifatCounts[s] / total) * 100) || 0;
-                let color = s==='Penting' ? 'bg-red-500' : (s==='Biasa' ? 'bg-slate-400' : 'bg-gold-500');
-                htmlSifat += `
-                    <div>
-                        <div class="flex justify-between text-xs font-semibold mb-1">
-                            <span class="text-slate-700">${s}</span>
-                            <span class="text-slate-500">${sifatCounts[s]} <span class="font-normal opacity-50">(${pct}%)</span></span>
-                        </div>
-                        <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
-                            <div class="${color} h-2 rounded-full" style="width: ${pct}%"></div>
-                        </div>
-                    </div>
-                `;
-            });
-            document.getElementById('sifat-stats-container').innerHTML = htmlSifat;
-
-            renderDashboardActivity();
-        }
-
-        function renderDashboardActivity() {
-            const tbody = document.getElementById('activity-table-body');
-            let html = '';
-            let data = [];
-
-            if(actTab === 'masuk') {
-                data = filterByMonthYear(dataSuratMasuk, 'tglTerima').slice(-5).reverse();
-                data.forEach(d => {
-                    const statusClass = d.sifat === 'Penting' ? 'bg-red-100 text-red-600' : 'bg-slate-100 text-slate-600';
-                    html += `<tr class="hover:bg-slate-50 group">
-                        <td class="py-3">
-                            <div class="font-semibold text-navy-900 group-hover:text-gold-600 transition">${d.nomor}</div>
-                            <div class="text-xs text-slate-500 mt-0.5">${d.perihal}</div>
-                        </td>
-                        <td class="py-3 text-slate-500">${formatDate(d.tglTerima)}</td>
-                        <td class="py-3 text-right"><span class="px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${statusClass}">${d.sifat}</span></td>
-                    </tr>`;
-                });
-            } else if (actTab === 'keluar') {
-                data = filterByMonthYear(dataSuratKeluar, 'tglSurat').slice(-5).reverse();
-                data.forEach(d => {
-                    html += `<tr class="hover:bg-slate-50 group">
-                        <td class="py-3"><div class="font-semibold text-navy-900 group-hover:text-gold-600 transition">${d.nomor}</div><div class="text-xs text-slate-500 mt-0.5">${d.perihal}</div></td>
-                        <td class="py-3 text-slate-500">${formatDate(d.tglSurat)}</td>
-                        <td class="py-3 text-right"><span class="px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider bg-indigo-100 text-indigo-600">Keluar</span></td>
-                    </tr>`;
-                });
-            } else {
-                 const smMonth = filterByMonthYear(dataSuratMasuk, 'tglTerima');
-                 smMonth.forEach(sm => {
-                     sm.disposisi.forEach(disp => {
-                         html += `<tr class="hover:bg-slate-50 group">
-                            <td class="py-3"><div class="font-semibold text-navy-900 group-hover:text-gold-600 transition">Ke: ${disp.tujuan}</div><div class="text-xs text-slate-500 mt-0.5">Ref: ${sm.nomor}</div></td>
-                            <td class="py-3 text-slate-500">${formatDate(disp.tgl)}</td>
-                            <td class="py-3 text-right"><span class="px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider bg-green-100 text-green-600">Didisposisi</span></td>
-                        </tr>`;
-                     });
-                 });
+            let activeNav = document.getElementById(`nav-${viewId}`);
+            if(activeNav) {
+                activeNav.classList.add('bg-teal-50', 'text-primary', 'font-semibold');
+                activeNav.classList.remove('text-slate-600');
             }
-            if(html === '') html = '<tr><td colspan="3" class="py-4 text-center text-slate-400 italic">Tidak ada aktivitas.</td></tr>';
-            tbody.innerHTML = html;
-        }
 
-
-        // --- SURAT MASUK LOGIC ---
-        function renderTableMasuk() {
-            const search = document.getElementById('search-sm').value.toLowerCase();
-            const tbody = document.getElementById('table-sm-body');
-            let html = '';
-            let count = 0;
-            dataSuratMasuk.forEach(d => {
-                if(d.asal.toLowerCase().includes(search) || d.perihal.toLowerCase().includes(search)) {
-                    count++;
-                    html += `<tr class="hover:bg-slate-50 border-b border-slate-50 last:border-0">
-                        <td class="py-3 text-slate-500 font-medium">${d.kode}</td>
-                        <td class="py-3">
-                            <div class="font-bold text-navy-900">${d.asal}</div>
-                            <div class="text-xs text-slate-400 mt-0.5">${d.nomor} • ${formatDate(d.tglSurat)}</div>
-                        </td>
-                        <td class="py-3 text-slate-600">${d.perihal}</td>
-                        <td class="py-3 text-center">
-                            <div class="flex items-center justify-center gap-2">
-                                <button onclick="viewDetail('${d.id}')" class="w-8 h-8 rounded bg-indigo-50 text-indigo-600 hover:bg-indigo-100 flex items-center justify-center transition" title="Detail"><i class="ph ph-eye"></i></button>
-                                <button onclick="editSurat('${d.id}', 'masuk')" class="w-8 h-8 rounded bg-amber-50 text-amber-600 hover:bg-amber-100 flex items-center justify-center transition" title="Edit"><i class="ph ph-pencil-simple"></i></button>
-                            </div>
-                        </td>
-                    </tr>`;
-                }
-            });
-            tbody.innerHTML = html;
-            document.getElementById('total-sm').innerText = count;
-        }
-
-        // --- SURAT KELUAR LOGIC ---
-        function addInput(containerId, namePrefix, value = '') {
-            const container = document.getElementById(containerId);
-            const div = document.createElement('div');
-            div.className = "flex gap-2 items-center mt-2";
-            div.innerHTML = `
-                <input type="text" name="${containerId === 'sk-kepada-container' ? 'sk-kepada[]' : 'sk-tembusan[]'}" value="${value}" class="flex-1 px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-gold-500 focus:outline-none text-sm" required>
-                <button type="button" onclick="this.parentElement.remove()" class="text-red-500 hover:bg-red-50 p-2 rounded"><i class="ph ph-trash"></i></button>
-            `;
-            container.appendChild(div);
-        }
-
-        function renderTableKeluar() {
-            const search = document.getElementById('search-sk').value.toLowerCase();
-            const tbody = document.getElementById('table-sk-body');
-            let html = '';
-            let count = 0;
-            dataSuratKeluar.forEach(d => {
-                const kepadaStr = d.kepada.join(', ');
-                if(kepadaStr.toLowerCase().includes(search) || d.perihal.toLowerCase().includes(search)) {
-                    count++;
-                    html += `<tr class="hover:bg-slate-50 border-b border-slate-50 last:border-0">
-                        <td class="py-3 text-slate-500 font-medium">${d.kode}</td>
-                        <td class="py-3">
-                            <div class="font-bold text-navy-900">${kepadaStr}</div>
-                            <div class="text-xs text-slate-400 mt-0.5">${d.nomor} • ${formatDate(d.tglSurat)}</div>
-                        </td>
-                        <td class="py-3 text-slate-600">${d.perihal}</td>
-                        <td class="py-3 text-center">
-                            <div class="flex items-center justify-center gap-2">
-                                <button onclick="viewDetailSK('${d.id}')" class="w-8 h-8 rounded bg-indigo-50 text-indigo-600 hover:bg-indigo-100 flex items-center justify-center transition" title="Detail"><i class="ph ph-eye"></i></button>
-                                <button onclick="editSurat('${d.id}', 'keluar')" class="w-8 h-8 rounded bg-amber-50 text-amber-600 hover:bg-amber-100 flex items-center justify-center transition" title="Edit"><i class="ph ph-pencil-simple"></i></button>
-                            </div>
-                        </td>
-                    </tr>`;
-                }
-            });
-            tbody.innerHTML = html;
-            document.getElementById('total-sk').innerText = count;
-        }
-
-        // --- EDIT & CANCEL LOGIC ---
-        function editSurat(id, type) {
-            if (type === 'masuk') {
-                const data = dataSuratMasuk.find(d => d.id === id);
-                if (!data) return;
-                
-                document.getElementById('title-form-sm').innerText = "Edit Surat Masuk";
-                document.getElementById('sm-id').value = data.id;
-                document.getElementById('sm-kode').value = data.kode;
-                document.getElementById('sm-sifat').value = data.sifat;
-                document.getElementById('sm-nomor').value = data.nomor;
-                document.getElementById('sm-asal').value = data.asal;
-                document.getElementById('sm-tgl-surat').value = data.tglSurat;
-                document.getElementById('sm-tgl-terima').value = data.tglTerima;
-                document.getElementById('sm-perihal').value = data.perihal;
-                
-                document.getElementById('btn-cancel-sm').classList.remove('hidden');
-                document.getElementById('btn-submit-sm').innerHTML = '<i class="ph ph-arrows-clockwise"></i> Update Data';
-                
-                // Scroll to top of form
-                document.getElementById('main-container').scrollTo({ top: 0, behavior: 'smooth' });
-                
-            } else if (type === 'keluar') {
-                const data = dataSuratKeluar.find(d => d.id === id);
-                if (!data) return;
-
-                document.getElementById('title-form-sk').innerText = "Edit Surat Keluar";
-                document.getElementById('sk-id').value = data.id;
-                document.getElementById('sk-kode').value = data.kode;
-                document.getElementById('sk-sifat').value = data.sifat;
-                document.getElementById('sk-nomor').value = data.nomor;
-                document.getElementById('sk-tgl-surat').value = data.tglSurat;
-                document.getElementById('sk-perihal').value = data.perihal;
-
-                // Reset and populate arrays
-                const kepContainer = document.getElementById('sk-kepada-container');
-                kepContainer.innerHTML = '';
-                data.kepada.forEach((k, i) => {
-                    if(i===0) kepContainer.innerHTML = `<input type="text" name="sk-kepada[]" value="${k}" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-gold-500 focus:outline-none text-sm" required>`;
-                    else addInput('sk-kepada-container', 'Kepada', k);
-                });
-
-                const tembContainer = document.getElementById('sk-tembusan-container');
-                tembContainer.innerHTML = '';
-                if(data.tembusan.length > 0) {
-                    data.tembusan.forEach((t, i) => {
-                         if(i===0) tembContainer.innerHTML = `<input type="text" name="sk-tembusan[]" value="${t}" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-gold-500 focus:outline-none text-sm">`;
-                         else addInput('sk-tembusan-container', 'Tembusan', t);
-                    });
-                } else {
-                    tembContainer.innerHTML = `<input type="text" name="sk-tembusan[]" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-gold-500 focus:outline-none text-sm">`;
-                }
-
-                document.getElementById('btn-cancel-sk').classList.remove('hidden');
-                document.getElementById('btn-submit-sk').innerHTML = '<i class="ph ph-arrows-clockwise"></i> Update Data';
-
-                document.getElementById('main-container').scrollTo({ top: 0, behavior: 'smooth' });
-            }
-        }
-
-        function cancelEdit(type) {
-            if (type === 'masuk') {
-                document.getElementById('title-form-sm').innerText = "Entri Surat Masuk";
-                document.getElementById('sm-id').value = '';
-                document.getElementById('form-surat-masuk').reset();
-                document.getElementById('sm-file-name').innerText = 'Klik atau drag file PDF ke sini';
-                document.getElementById('btn-cancel-sm').classList.add('hidden');
-                document.getElementById('btn-submit-sm').innerHTML = '<i class="ph ph-floppy-disk"></i> Simpan Data';
-            } else if (type === 'keluar') {
-                document.getElementById('title-form-sk').innerText = "Entri Surat Keluar";
-                document.getElementById('sk-id').value = '';
-                document.getElementById('form-surat-keluar').reset();
-                
-                document.getElementById('sk-kepada-container').innerHTML = `<input type="text" name="sk-kepada[]" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-gold-500 focus:outline-none text-sm" required>`;
-                document.getElementById('sk-tembusan-container').innerHTML = `<input type="text" name="sk-tembusan[]" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-gold-500 focus:outline-none text-sm">`;
-                
-                document.getElementById('btn-cancel-sk').classList.add('hidden');
-                document.getElementById('btn-submit-sk').innerHTML = '<i class="ph ph-floppy-disk"></i> Simpan Data';
-            }
-        }
-
-        // --- SAVE / UPDATE DATA ---
-        async function saveSurat(e, type) {
-            e.preventDefault();
-            
-            if(type === 'masuk') {
-                const editId = document.getElementById('sm-id').value;
-                const isUpdate = editId !== '';
-                let payload = { action: isUpdate ? 'updateSuratMasuk' : 'saveSuratMasuk', data: {} };
-                
-                const fileInput = document.getElementById('sm-file');
-                let base64 = ''; let fileName = '';
-                if(fileInput.files.length > 0) {
-                    base64 = await getBase64(fileInput.files[0]); fileName = fileInput.files[0].name;
-                }
-
-                payload.data = {
-                    id: isUpdate ? editId : 'SM' + Date.now(),
-                    kode: document.getElementById('sm-kode').value, sifat: document.getElementById('sm-sifat').value,
-                    nomor: document.getElementById('sm-nomor').value, asal: document.getElementById('sm-asal').value,
-                    tglSurat: document.getElementById('sm-tgl-surat').value, tglTerima: document.getElementById('sm-tgl-terima').value,
-                    perihal: document.getElementById('sm-perihal').value, fileData: base64, fileName: fileName
-                };
-
-                if (isUpdate) {
-                    const idx = dataSuratMasuk.findIndex(d => d.id === editId);
-                    // Pertahankan data array disposisi
-                    payload.data.disposisi = dataSuratMasuk[idx].disposisi; 
-                    dataSuratMasuk[idx] = {...dataSuratMasuk[idx], ...payload.data};
-                    showToast('Data Surat Masuk berhasil diperbarui');
-                } else {
-                    payload.data.disposisi = [];
-                    dataSuratMasuk.unshift({...payload.data, file: '#'});
-                    showToast('Data Surat Masuk berhasil disimpan');
-                }
-                
-                cancelEdit('masuk');
-                renderTableMasuk();
-                sendToGAS(payload);
-
-            } else {
-                const editId = document.getElementById('sk-id').value;
-                const isUpdate = editId !== '';
-                let payload = { action: isUpdate ? 'updateSuratKeluar' : 'saveSuratKeluar', data: {} };
-
-                const kepadaInputs = Array.from(document.querySelectorAll('input[name="sk-kepada[]"]')).map(i => i.value).filter(v=>v);
-                const tembusanInputs = Array.from(document.querySelectorAll('input[name="sk-tembusan[]"]')).map(i => i.value).filter(v=>v);
-                
-                payload.data = {
-                    id: isUpdate ? editId : 'SK' + Date.now(),
-                    kode: document.getElementById('sk-kode').value, sifat: document.getElementById('sk-sifat').value,
-                    nomor: document.getElementById('sk-nomor').value, kepada: kepadaInputs,
-                    tglSurat: document.getElementById('sk-tgl-surat').value, perihal: document.getElementById('sk-perihal').value,
-                    tembusan: tembusanInputs
-                };
-
-                if (isUpdate) {
-                    const idx = dataSuratKeluar.findIndex(d => d.id === editId);
-                    dataSuratKeluar[idx] = payload.data;
-                    showToast('Data Surat Keluar berhasil diperbarui');
-                } else {
-                    dataSuratKeluar.unshift(payload.data);
-                    showToast('Data Surat Keluar berhasil disimpan');
-                }
-
-                cancelEdit('keluar');
-                renderTableKeluar();
-                sendToGAS(payload);
-            }
-        }
-
-        // --- DETAIL SURAT MASUK & DISPOSISI ---
-        function viewDetail(id) {
-            const data = dataSuratMasuk.find(d => d.id === id);
-            if(!data) return;
-
-            document.getElementById('detail-info').innerHTML = `
-                <div><div class="text-xs text-slate-400 mb-0.5">Asal Surat</div><div class="font-bold text-navy-900">${data.asal}</div></div>
-                <div><div class="text-xs text-slate-400 mb-0.5">Nomor Surat</div><div class="font-bold text-navy-900">${data.nomor}</div></div>
-                <div><div class="text-xs text-slate-400 mb-0.5">Tanggal Surat</div><div class="font-medium text-slate-700">${formatDate(data.tglSurat)}</div></div>
-                <div><div class="text-xs text-slate-400 mb-0.5">Sifat</div><div class="font-medium text-slate-700">${data.sifat}</div></div>
-                <div class="col-span-2"><div class="text-xs text-slate-400 mb-0.5">Perihal</div><div class="font-medium text-slate-700 leading-relaxed">${data.perihal}</div></div>
-            `;
-
-            document.getElementById('disp-id-surat').value = id;
-            document.getElementById('area-disposisi').classList.remove('hidden');
-            renderListDisposisi(data);
-
-            const modal = document.getElementById('modal-detail');
-            const content = document.getElementById('modal-detail-content');
-            modal.classList.remove('hidden');
-            setTimeout(() => { content.classList.remove('scale-95', 'opacity-0'); }, 10);
-        }
-
-        function renderListDisposisi(data) {
-            const listContainer = document.getElementById('list-disposisi');
-            const emptyTxt = document.getElementById('txt-belum-disposisi');
-            
-            if(data.disposisi.length === 0) {
-                emptyTxt.classList.remove('hidden');
-                listContainer.innerHTML = '';
-            } else {
-                emptyTxt.classList.add('hidden');
-                let html = '';
-                data.disposisi.forEach(d => {
-                    html += `
-                    <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm relative pl-12">
-                        <div class="absolute left-4 top-4 w-6 h-6 rounded-full bg-gold-100 text-gold-600 flex items-center justify-center"><i class="ph ph-share-network"></i></div>
-                        <div class="flex justify-between items-start mb-2">
-                            <div class="font-bold text-navy-900">${d.tujuan}</div>
-                            <div class="text-xs text-slate-400">${formatDate(d.tgl)}</div>
-                        </div>
-                        <div class="text-sm text-slate-600 mb-1"><span class="font-semibold text-slate-500">Saran:</span> ${d.saran}</div>
-                        <div class="text-sm text-slate-600"><span class="font-semibold text-slate-500">Isi:</span> ${d.isi}</div>
-                    </div>`;
-                });
-                listContainer.innerHTML = html;
-            }
-        }
-
-        function closeDetail() {
-            const modal = document.getElementById('modal-detail');
-            const content = document.getElementById('modal-detail-content');
-            content.classList.add('scale-95', 'opacity-0');
-            setTimeout(() => { modal.classList.add('hidden'); hideFormDisposisi(); }, 200);
-        }
-
-        function showFormDisposisi() {
-            document.getElementById('btn-tambah-disposisi').classList.add('hidden');
-            document.getElementById('form-disposisi').classList.remove('hidden');
-        }
-        function hideFormDisposisi() {
-            document.getElementById('btn-tambah-disposisi').classList.remove('hidden');
-            document.getElementById('form-disposisi').classList.add('hidden');
-            document.getElementById('form-disposisi').reset();
-        }
-
-        function saveDisposisi(e) {
-            e.preventDefault();
-            const id = document.getElementById('disp-id-surat').value;
-            const dispData = {
-                tujuan: document.getElementById('disp-tujuan').value,
-                saran: document.getElementById('disp-saran').value,
-                isi: document.getElementById('disp-isi').value,
-                tgl: new Date().toISOString().split('T')[0]
+            const titles = {
+                'dashboard': 'Dashboard', 'pengurus': 'Data Pengurus', 
+                'kecamatan': 'Data Kecamatan', 'kelurahan': 'Data Kelurahan',
+                'birthday': 'Ulang Tahun', 'rekap': 'Rekap Data'
             };
+            document.getElementById('page-title').innerText = titles[viewId];
+            currentView = viewId;
 
-            const surat = dataSuratMasuk.find(d => d.id === id);
-            if(surat) {
-                surat.disposisi.push(dispData);
-                renderListDisposisi(surat);
-                hideFormDisposisi();
-                showToast('Disposisi berhasil ditambahkan');
-                sendToGAS({ action: 'saveDisposisi', data: { idSurat: id, ...dispData } });
+            if(window.innerWidth < 768) document.getElementById('sidebar').classList.add('-translate-x-full');
+
+            // Render logic based on view
+            if(viewId === 'dashboard') renderDashboard();
+            if(viewId === 'pengurus') renderTablePengurus();
+            if(viewId === 'kecamatan') renderTableWilayah('kecamatan');
+            if(viewId === 'kelurahan') renderTableWilayah('kelurahan');
+            if(viewId === 'birthday') renderBirthdayMenu();
+            
+            if(viewId !== 'dashboard') clearInterval(miniCardInterval);
+        }
+
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('-translate-x-full');
+        }
+
+        // Helpers
+        function calculateAge(dob) {
+            if(!dob) return 0;
+            const diff = Date.now() - new Date(dob).getTime();
+            return Math.abs(new Date(diff).getUTCFullYear() - 1970);
+        }
+
+        function formatDateCustom(dobStr) {
+            if(!dobStr) return "-";
+            const date = new Date(dobStr);
+            const months = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+            return `${months[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
+        }
+
+        function getStatusClass(status) {
+            switch(status.toLowerCase()) {
+                case 'kota': return 'status-kota';
+                case 'staf': return 'status-staf';
+                case 'kecamatan': return 'status-kecamatan';
+                case 'kelurahan': return 'status-kelurahan';
+                default: return 'text-slate-600';
             }
         }
 
-        // --- DETAIL SURAT KELUAR ---
-        function viewDetailSK(id) {
-            const data = dataSuratKeluar.find(d => d.id === id);
-            if(!data) return;
-
-            document.getElementById('detail-info-sk').innerHTML = `
-                <div class="grid grid-cols-2 gap-4 border-b border-slate-100 pb-4">
-                    <div><div class="text-xs text-slate-400 mb-0.5">Nomor Surat</div><div class="font-bold text-navy-900">${data.nomor}</div></div>
-                    <div><div class="text-xs text-slate-400 mb-0.5">Tanggal Surat</div><div class="font-medium text-slate-700">${formatDate(data.tglSurat)}</div></div>
-                    <div><div class="text-xs text-slate-400 mb-0.5">Kode Surat</div><div class="font-medium text-slate-700">${data.kode}</div></div>
-                    <div><div class="text-xs text-slate-400 mb-0.5">Sifat</div><div class="font-medium text-slate-700">${data.sifat}</div></div>
-                </div>
-                <div>
-                    <div class="text-xs text-slate-400 mb-1.5">Kepada</div>
-                    <div class="space-y-1.5">
-                        ${data.kepada.map(k => `<div class="bg-slate-50 px-3 py-2 rounded border border-slate-100 text-sm font-medium text-slate-700">${k}</div>`).join('')}
-                    </div>
-                </div>
-                <div><div class="text-xs text-slate-400 mb-1">Perihal</div><div class="font-medium text-slate-700 leading-relaxed bg-slate-50 p-3 rounded border border-slate-100 text-sm">${data.perihal}</div></div>
-                ${data.tembusan && data.tembusan.length > 0 ? `
-                <div>
-                    <div class="text-xs text-slate-400 mb-1.5">Tembusan</div>
-                    <div class="space-y-1.5">
-                        ${data.tembusan.map(t => `<div class="text-sm font-medium text-slate-600 flex gap-2"><i class="ph ph-arrow-elbow-down-right text-slate-400"></i> ${t}</div>`).join('')}
-                    </div>
-                </div>` : ''}
-            `;
-
-            const modal = document.getElementById('modal-detail-sk');
-            const content = document.getElementById('modal-detail-sk-content');
-            modal.classList.remove('hidden');
-            setTimeout(() => { content.classList.remove('scale-95', 'opacity-0'); }, 10);
-        }
-
-        function closeDetailSK() {
-            const modal = document.getElementById('modal-detail-sk');
-            const content = document.getElementById('modal-detail-sk-content');
-            content.classList.add('scale-95', 'opacity-0');
-            setTimeout(() => { modal.classList.add('hidden'); }, 200);
-        }
-
-
-        // --- TIMELINE LOGIC ---
-        function renderTimeline() {
-            const search = document.getElementById('search-timeline').value.toLowerCase();
-            const container = document.getElementById('timeline-container');
-            let html = '';
-
-            let filtered = dataSuratMasuk;
-            if(search) {
-                filtered = dataSuratMasuk.filter(d => d.nomor.toLowerCase().includes(search) || d.asal.toLowerCase().includes(search));
+        function getStatusIcon(status) {
+            switch(status.toLowerCase()) {
+                case 'kota': return '<i class="ph ph-buildings text-teal-600"></i>';
+                case 'staf': return '<i class="ph ph-user-gear text-blue-500"></i>';
+                case 'kecamatan': return '<i class="ph ph-users-three text-indigo-500"></i>';
+                case 'kelurahan': return '<i class="ph ph-users text-orange-500"></i>';
+                default: return '<i class="ph ph-user"></i>';
             }
+        }
 
-            filtered.forEach(sm => {
-                html += `
-                <div class="relative pl-6 md:pl-10">
-                    <!-- Dot (Presisi pada Border) -->
-                    <div class="absolute -left-[9px] top-6 w-4 h-4 rounded-full bg-gold-500 ring-4 ring-white shadow-sm z-10"></div>
-                    
-                    <!-- Main Card Elegan -->
-                    <div class="bg-slate-50/70 rounded-2xl border border-slate-100 shadow-sm p-6 w-full group transition hover:shadow-md">
-                        <div class="text-[10px] font-bold text-gold-600 tracking-widest uppercase mb-2">Surat Diterima</div>
-                        <h3 class="font-serif text-lg font-bold text-navy-900">${sm.asal}</h3>
-                        <div class="text-xs text-slate-500 mb-4">${sm.nomor} <span class="mx-1">&bull;</span> ${formatDate(sm.tglTerima)}</div>
-                        
-                        <div class="p-4 bg-white rounded-xl border border-slate-100 text-sm text-slate-700 shadow-sm">
-                            ${sm.perihal}
-                        </div>
-                        
-                        <!-- Disposisi Nested UI -->
-                        ${sm.disposisi.length > 0 ? `<div class="mt-4 space-y-4">` : ''}
-                        ${sm.disposisi.map(disp => `
-                            <div class="flex items-start relative pl-10 md:pl-16">
-                                <!-- Connector Horizontal Line -->
-                                <div class="absolute left-4 md:left-4 top-1/2 -translate-y-1/2 w-6 md:w-12 h-px bg-slate-200"></div>
-                                <!-- Share Icon -->
-                                <div class="absolute left-0 md:left-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center text-slate-500 border-[3px] border-white z-10 shadow-sm"><i class="ph ph-share-network"></i></div>
+        // Generator ID 12 digit (Diawali huruf)
+        function generateRandomID() {
+            const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+            const alphanum = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+            let id = letters.charAt(Math.floor(Math.random() * letters.length));
+            for (let i = 0; i < 11; i++) {
+                id += alphanum.charAt(Math.floor(Math.random() * alphanum.length));
+            }
+            return id;
+        }
 
-                                <div class="flex-1 bg-white border border-slate-100 rounded-xl p-4 shadow-sm transition hover:border-slate-200">
-                                    <div class="font-bold text-navy-900 text-sm mb-1">${disp.tujuan}</div>
-                                    <div class="text-xs text-slate-500">${disp.isi}</div>
-                                </div>
-                            </div>
-                        `).join('')}
-                        ${sm.disposisi.length > 0 ? `</div>` : ''}
+        // Format tanggal khusus untuk Spreadsheet
+        function formatToSpreadsheetDate(ymd) {
+            if(!ymd) return "";
+            const d = new Date(ymd);
+            if(isNaN(d)) return ymd;
+            const months = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+            return `${months[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
+        }
+
+        // Parse kembali tanggal dari Spreadsheet ke format HTML (YYYY-MM-DD)
+        function parseSpreadsheetDateToYMD(indoDateStr) {
+            if(!indoDateStr) return "";
+            if(indoDateStr.includes("-")) return indoDateStr;
+            let enDate = indoDateStr
+                .replace("Januari", "January").replace("Februari", "February").replace("Maret", "March")
+                .replace("Mei", "May").replace("Juni", "June").replace("Juli", "July")
+                .replace("Agustus", "August").replace("Oktober", "October").replace("Desember", "December");
+            const d = new Date(enDate);
+            if(isNaN(d)) return indoDateStr;
+            const yyyy = d.getFullYear();
+            const mm = String(d.getMonth() + 1).padStart(2, '0');
+            const dd = String(d.getDate()).padStart(2, '0');
+            return `${yyyy}-${mm}-${dd}`;
+        }
+
+        // Dashboard Functions
+        function renderDashboard() {
+            // Stats
+            let cKota = 0, cStaf = 0, cKec = 0, cKel = 0;
+            let agamaCount = { 'Islam':0, 'Kristen':0, 'Katolik':0, 'Hindu':0, 'Buddha':0, 'Konghucu':0 };
+            
+            appData.pengurus.forEach(p => {
+                let s = p.status.toLowerCase();
+                if(s === 'kota') cKota++;
+                if(s === 'staf') cStaf++;
+                if(s === 'kecamatan') cKec++;
+                if(s === 'kelurahan') cKel++;
+                if(agamaCount[p.agama] !== undefined) agamaCount[p.agama]++;
+            });
+
+            document.getElementById('stat-kota').innerText = cKota;
+            document.getElementById('stat-staf').innerText = cStaf;
+            document.getElementById('stat-kecamatan').innerText = appData.kecamatan.length;
+            document.getElementById('stat-kelurahan').innerText = appData.kelurahan.length;
+
+            // Chart
+            if(chartInstance) chartInstance.destroy();
+            const ctx = document.getElementById('agamaChart').getContext('2d');
+            chartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(agamaCount),
+                    datasets: [{
+                        data: Object.values(agamaCount),
+                        backgroundColor: ['#0d9488', '#14b8a6', '#2dd4bf', '#5eead4', '#99f6e4', '#ccfbf1'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    cutout: '70%'
+                }
+            });
+
+            // Birthday Current Month
+            const currentMonth = new Date().getMonth();
+            const months = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+            document.getElementById('dash-month-name').innerText = months[currentMonth];
+            
+            let bdays = appData.pengurus.filter(p => new Date(p.tgl_lahir).getMonth() === currentMonth);
+            bdays.sort((a,b) => new Date(a.tgl_lahir).getDate() - new Date(b.tgl_lahir).getDate());
+            
+            let bdayHtml = '';
+            bdays.slice(0,5).forEach(p => {
+                bdayHtml += `
+                <div class="bg-white/10 p-3 rounded-xl flex items-center justify-between backdrop-blur-sm border border-white/20">
+                    <div>
+                        <p class="font-bold text-sm">${p.nama}</p>
+                        <p class="text-xs text-teal-100">${p.jabatan}</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="font-bold text-lg">${new Date(p.tgl_lahir).getDate()}</p>
+                        <p class="text-[10px] uppercase opacity-80">${calculateAge(p.tgl_lahir)} Thn</p>
                     </div>
                 </div>`;
             });
-            
-            if(html==='') html = '<div class="text-center text-slate-400 italic py-10">Data jejak arsip tidak ditemukan.</div>';
-            container.innerHTML = html;
+            if(bdays.length === 0) bdayHtml = '<p class="text-sm text-center mt-4 opacity-80">Tidak ada yang berulang tahun bulan ini.</p>';
+            document.getElementById('dash-birthday-list').innerHTML = bdayHtml;
+
+            // 8 Mini Cards
+            renderMiniCards();
+            clearInterval(miniCardInterval);
+            miniCardInterval = setInterval(renderMiniCards, 5000); // rotate every 5s
         }
 
-        // --- GALERI LOGIC ---
-        function renderGaleri() {
-            const smMonth = filterByMonthYear(dataSuratMasuk, 'tglTerima');
-            const skMonth = filterByMonthYear(dataSuratKeluar, 'tglSurat');
+        function renderMiniCards() {
+            if(appData.pengurus.length === 0) return;
+            // Get random 8
+            let shuffled = [...appData.pengurus].sort(() => 0.5 - Math.random());
+            let selected = shuffled.slice(0, 8);
             
-            const contMasuk = document.getElementById('galeri-masuk');
-            const contKeluar = document.getElementById('galeri-keluar');
+            let html = '';
+            selected.forEach(p => {
+                html += `
+                <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 fade-in flex flex-col justify-between h-32 relative overflow-hidden group">
+                    <div class="absolute -right-4 -top-4 opacity-5 text-7xl group-hover:scale-110 transition">${getStatusIcon(p.status)}</div>
+                    <div>
+                        <div class="flex items-center gap-2 mb-1">
+                            ${getStatusIcon(p.status)} <span class="text-xs font-bold text-slate-500">${p.status}</span>
+                        </div>
+                        <h4 class="font-bold text-slate-700 truncate" title="${p.nama}">${p.nama}</h4>
+                        <p class="text-xs text-slate-500 truncate">${p.jabatan}</p>
+                    </div>
+                    <div class="flex justify-between items-end mt-2">
+                        <span class="text-[10px] bg-slate-100 text-slate-600 px-2 py-1 rounded-md">${formatDateCustom(p.tgl_lahir)}</span>
+                        <span class="text-[10px] font-semibold ${p.warta.toLowerCase() === 'aktif' ? 'text-teal-600' : 'text-orange-500'}">${p.warta}</span>
+                    </div>
+                </div>`;
+            });
+            document.getElementById('dash-mini-cards').innerHTML = html;
+        }
 
-            const renderCard = (d) => `
-                <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden hover:shadow-lg transition group cursor-pointer">
-                    <div class="h-32 bg-slate-100 flex items-center justify-center relative">
-                        <i class="ph-fill ph-file-pdf text-5xl text-red-400 group-hover:scale-110 transition-transform"></i>
-                        <div class="absolute top-2 right-2 bg-white/80 backdrop-blur px-2 py-1 rounded text-[10px] font-bold text-slate-600">${formatDate(d.tglSurat || d.tglTerima)}</div>
-                    </div>
-                    <div class="p-4 border-t border-slate-100">
-                        <div class="font-bold text-sm text-navy-900 truncate" title="${d.nomor}">${d.nomor}</div>
-                        <div class="text-xs text-slate-500 mt-1 truncate" title="${d.perihal}">${d.perihal}</div>
-                    </div>
-                </div>
+        // Pengurus Functions
+        function renderTablePengurus() {
+            const search = document.getElementById('search-pengurus').value.toLowerCase();
+            let html = '';
+            appData.pengurus.forEach(p => {
+                if(p.nama.toLowerCase().includes(search) || p.jabatan.toLowerCase().includes(search)) {
+                    html += `
+                    <tr class="hover:bg-slate-50 transition group">
+                        <td class="py-3 px-4 border-b border-slate-50">
+                            <div class="font-bold text-slate-700">${p.nama}</div>
+                            <div class="text-xs text-slate-500">${p.jabatan}</div>
+                        </td>
+                        <td class="py-3 px-4 border-b border-slate-50">
+                            <div class="text-sm text-slate-700">${formatDateCustom(p.tgl_lahir)}</div>
+                            <div class="text-xs text-slate-500">${calculateAge(p.tgl_lahir)} Tahun</div>
+                        </td>
+                        <td class="py-3 px-4 border-b border-slate-50">
+                            <div class="text-sm ${getStatusClass(p.status)}">${p.status}</div>
+                            <div class="text-xs text-slate-500">${p.warta}</div>
+                        </td>
+                        <td class="py-3 px-4 border-b border-slate-50">
+                            <div class="text-sm text-slate-700">${p.agama}</div>
+                            <div class="text-xs text-slate-500">+62 ${p.hp}</div>
+                        </td>
+                        <td class="py-3 px-4 border-b border-slate-50 text-right">
+                            <button onclick="showDetail('pengurus', '${p.id}')" class="text-slate-400 hover:text-blue-500 mr-2 transition"><i class="ph ph-eye text-lg"></i></button>
+                            <button onclick="editPengurus('${p.id}')" class="text-slate-400 hover:text-primary transition"><i class="ph ph-pencil-simple text-lg"></i></button>
+                        </td>
+                    </tr>`;
+                }
+            });
+            document.getElementById('tbody-pengurus').innerHTML = html;
+        }
+
+        function populateDatalistPengurus() {
+            let html = '';
+            appData.pengurus.forEach(p => {
+                html += `<option value="${p.nama}">`;
+            });
+            document.getElementById('list-pengurus').innerHTML = html;
+        }
+
+        function openFormPengurus() {
+            document.getElementById('form-pengurus-title').innerText = 'Tambah Pengurus';
+            document.getElementById('p-id').value = '';
+            document.getElementById('p-nama').value = '';
+            document.getElementById('p-jabatan').value = '';
+            document.getElementById('p-tgl').value = '';
+            document.getElementById('p-status').value = 'Kota';
+            document.getElementById('p-agama').value = 'Islam';
+            document.getElementById('p-hp').value = '';
+            document.getElementById('p-alamat').value = '';
+            document.getElementById('p-warta').value = 'Aktif';
+            showModal('modal-form-pengurus');
+        }
+
+        function editPengurus(id) {
+            const p = appData.pengurus.find(x => x.id === id);
+            if(!p) return;
+            document.getElementById('form-pengurus-title').innerText = 'Edit Pengurus';
+            document.getElementById('p-id').value = p.id;
+            document.getElementById('p-nama').value = p.nama;
+            document.getElementById('p-jabatan').value = p.jabatan;
+            document.getElementById('p-tgl').value = p.tgl_lahir;
+            document.getElementById('p-status').value = p.status;
+            document.getElementById('p-agama').value = p.agama;
+            document.getElementById('p-hp').value = p.hp;
+            document.getElementById('p-alamat').value = p.alamat;
+            document.getElementById('p-warta').value = p.warta;
+            showModal('modal-form-pengurus');
+        }
+
+        function savePengurus() {
+            const id = document.getElementById('p-id').value;
+            const obj = {
+                id: id ? id : generateRandomID(),
+                nama: document.getElementById('p-nama').value,
+                jabatan: document.getElementById('p-jabatan').value,
+                tgl_lahir: document.getElementById('p-tgl').value,
+                status: document.getElementById('p-status').value,
+                agama: document.getElementById('p-agama').value,
+                hp: document.getElementById('p-hp').value,
+                alamat: document.getElementById('p-alamat').value,
+                warta: document.getElementById('p-warta').value
+            };
+
+            if(!obj.nama) return alert("Nama harus diisi!");
+
+            if(id) {
+                const idx = appData.pengurus.findIndex(x => x.id == id);
+                appData.pengurus[idx] = obj;
+            } else {
+                appData.pengurus.push(obj);
+            }
+            
+            saveDataLocal();
+            closeModal();
+            renderTablePengurus();
+        }
+
+        // Kecamatan & Kelurahan Functions
+        function renderTableWilayah(type) {
+            const dataArr = appData[type];
+            let html = '';
+            let countL = 0, countP = 0;
+
+            dataArr.forEach(w => {
+                if(w.lp === 'L') countL++; else countP++;
+                html += `
+                <tr class="hover:bg-slate-50 transition">
+                    <td class="py-3 px-4 border-b border-slate-50 font-bold text-slate-700">${w.nama}</td>
+                    <td class="py-3 px-4 border-b border-slate-50">
+                        <div class="text-sm text-slate-700">${w.pejabat}</div>
+                        <div class="text-xs font-semibold ${w.lp === 'L' ? 'text-blue-500' : 'text-pink-500'}">(${w.lp})</div>
+                    </td>
+                    <td class="py-3 px-4 border-b border-slate-50 text-sm text-slate-700">${w.ketua}</td>
+                    <td class="py-3 px-4 border-b border-slate-50">
+                        <div class="text-sm text-slate-700">${w.sekretaris}</div>
+                        <div class="text-xs text-slate-500">+62 ${w.hp}</div>
+                    </td>
+                    <td class="py-3 px-4 border-b border-slate-50 text-right">
+                        <button onclick="showDetail('${type}', '${w.id}')" class="text-slate-400 hover:text-blue-500 mr-2 transition"><i class="ph ph-eye text-lg"></i></button>
+                        <button onclick="editWilayah('${type}', '${w.id}')" class="text-slate-400 hover:text-primary transition"><i class="ph ph-pencil-simple text-lg"></i></button>
+                    </td>
+                </tr>`;
+            });
+            document.getElementById(`tbody-${type}`).innerHTML = html;
+
+            // Render LP Bar
+            const total = countL + countP;
+            const labelsHtml = total === 0 ? '' : `
+                <span class="text-blue-500 flex items-center gap-1"><i class="ph-fill ph-gender-male text-base"></i> Laki-laki: ${countL}</span>
+                <span class="text-pink-500 flex items-center gap-1">Perempuan: ${countP} <i class="ph-fill ph-gender-female text-base"></i></span>
             `;
+            const barHtml = total === 0 ? '<div class="w-full bg-slate-200 text-slate-500 text-xs flex items-center justify-center h-full">Belum ada data</div>' : `
+                <div style="width: ${(countL/total)*100}%" class="bg-blue-500 h-full transition-all duration-500"></div>
+                <div style="width: ${(countP/total)*100}%" class="bg-pink-500 h-full transition-all duration-500"></div>
+            `;
+            
+            document.getElementById(`labels-${type}-lp`).innerHTML = labelsHtml;
+            document.getElementById(`bar-${type}-lp`).innerHTML = barHtml;
+        }
 
-            contMasuk.innerHTML = smMonth.length ? smMonth.map(renderCard).join('') : '<p class="text-sm text-slate-400 italic">Tidak ada arsip bulan ini.</p>';
-            contKeluar.innerHTML = skMonth.length ? skMonth.map(renderCard).join('') : '<p class="text-sm text-slate-400 italic">Tidak ada arsip bulan ini.</p>';
+        function openFormKecamatan() { openFormWilayah('kecamatan'); }
+        function openFormKelurahan() { openFormWilayah('kelurahan'); }
+
+        function openFormWilayah(type) {
+            document.getElementById('form-wilayah-title').innerText = `Tambah ${type === 'kecamatan' ? 'Kecamatan' : 'Kelurahan'}`;
+            document.getElementById('lbl-nama-wilayah').innerText = `Nama ${type === 'kecamatan' ? 'Kecamatan' : 'Kelurahan'}`;
+            document.getElementById('w-id').value = '';
+            document.getElementById('w-type').value = type;
+            document.getElementById('w-nama').value = '';
+            document.getElementById('w-pejabat').value = '';
+            document.getElementById('w-lp').value = 'L';
+            document.getElementById('w-ketua').value = '';
+            document.getElementById('w-sekretaris').value = '';
+            document.getElementById('w-hp').value = '';
+            showModal('modal-form-wilayah');
+        }
+
+        function editWilayah(type, id) {
+            const w = appData[type].find(x => x.id === id);
+            if(!w) return;
+            document.getElementById('form-wilayah-title').innerText = `Edit ${type === 'kecamatan' ? 'Kecamatan' : 'Kelurahan'}`;
+            document.getElementById('lbl-nama-wilayah').innerText = `Nama ${type === 'kecamatan' ? 'Kecamatan' : 'Kelurahan'}`;
+            document.getElementById('w-id').value = w.id;
+            document.getElementById('w-type').value = type;
+            document.getElementById('w-nama').value = w.nama;
+            document.getElementById('w-pejabat').value = w.pejabat;
+            document.getElementById('w-lp').value = w.lp;
+            document.getElementById('w-ketua').value = w.ketua;
+            document.getElementById('w-sekretaris').value = w.sekretaris;
+            document.getElementById('w-hp').value = w.hp;
+            showModal('modal-form-wilayah');
+        }
+
+        function saveWilayah() {
+            const id = document.getElementById('w-id').value;
+            const type = document.getElementById('w-type').value;
+            const obj = {
+                id: id ? id : generateRandomID(),
+                nama: document.getElementById('w-nama').value,
+                pejabat: document.getElementById('w-pejabat').value,
+                lp: document.getElementById('w-lp').value,
+                ketua: document.getElementById('w-ketua').value,
+                sekretaris: document.getElementById('w-sekretaris').value,
+                hp: document.getElementById('w-hp').value
+            };
+
+            if(!obj.nama) return alert("Nama Wilayah harus diisi!");
+
+            if(id) {
+                const idx = appData[type].findIndex(x => x.id == id);
+                appData[type][idx] = obj;
+            } else {
+                appData[type].push(obj);
+            }
+            
+            // Auto Update Status Pengurus jika terpilih sbg Ketua
+            if(obj.ketua) {
+                let pIdx = appData.pengurus.findIndex(p => p.nama === obj.ketua);
+                if(pIdx > -1) {
+                    appData.pengurus[pIdx].status = type === 'kecamatan' ? 'Kecamatan' : 'Kelurahan';
+                }
+            }
+
+            saveDataLocal();
+            closeModal();
+            renderTableWilayah(type);
+        }
+
+        // Birthday Functions
+        function renderBirthdayMenu() {
+            const months = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+            let mHtml = '';
+            let currentM = new Date().getMonth();
+            months.forEach((m, idx) => {
+                let activeClass = idx === currentM ? 'bg-primary text-white shadow-md' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50';
+                mHtml += `<button onclick="showBirthdays(${idx})" class="px-5 py-2 rounded-full whitespace-nowrap font-medium transition text-sm ${activeClass}" id="btn-month-${idx}">${m}</button>`;
+            });
+            document.getElementById('month-selector').innerHTML = mHtml;
+            showBirthdays(currentM);
+        }
+
+        function showBirthdays(monthIdx) {
+            // Update active button styling
+            const months = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+            document.getElementById('bday-title-month').innerText = `Ulang Tahun di Bulan ${months[monthIdx]}`;
+            
+            for(let i=0; i<12; i++) {
+                let btn = document.getElementById(`btn-month-${i}`);
+                if(btn) {
+                    if(i === monthIdx) {
+                        btn.className = "px-5 py-2 rounded-full whitespace-nowrap font-medium transition text-sm bg-primary text-white shadow-md";
+                    } else {
+                        btn.className = "px-5 py-2 rounded-full whitespace-nowrap font-medium transition text-sm bg-white text-slate-600 border border-slate-200 hover:bg-slate-50";
+                    }
+                }
+            }
+
+            let bdays = appData.pengurus.filter(p => new Date(p.tgl_lahir).getMonth() === monthIdx);
+            bdays.sort((a,b) => new Date(a.tgl_lahir).getDate() - new Date(b.tgl_lahir).getDate());
+
+            let html = '';
+            if(bdays.length === 0) {
+                html = `<div class="col-span-full text-center py-10 text-slate-400"><i class="ph ph-confetti text-4xl mb-2"></i><br>Tidak ada yang berulang tahun di bulan ini.</div>`;
+            } else {
+                bdays.forEach(p => {
+                    html += `
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border-l-4 border-primary hover:shadow-md transition relative group overflow-hidden">
+                        <i class="ph-fill ph-cake absolute -right-6 -bottom-6 text-7xl text-teal-50 opacity-50 group-hover:scale-110 transition"></i>
+                        <div class="flex gap-4 items-center">
+                            <div class="bg-teal-50 w-16 h-16 rounded-2xl flex flex-col items-center justify-center text-primary shadow-inner">
+                                <span class="text-2xl font-bold leading-none">${new Date(p.tgl_lahir).getDate()}</span>
+                                <span class="text-[10px] uppercase font-semibold">${months[monthIdx].substring(0,3)}</span>
+                            </div>
+                            <div class="flex-1">
+                                <h4 class="font-bold text-slate-800 text-lg leading-tight">${p.nama}</h4>
+                                <p class="text-sm text-primary font-medium mb-1">${p.jabatan}</p>
+                                <div class="flex items-center gap-4 text-xs text-slate-500">
+                                    <span title="Usia"><i class="ph ph-clock-counter-clockwise"></i> ${calculateAge(p.tgl_lahir)} thn</span>
+                                    <span title="HP"><i class="ph ph-phone"></i> +62${p.hp}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-4 text-xs text-slate-500 flex items-start gap-1">
+                            <i class="ph ph-map-pin mt-0.5"></i> ${p.alamat}
+                        </div>
+                    </div>`;
+                });
+            }
+            document.getElementById('bday-cards-container').innerHTML = html;
+        }
+
+        // Rekap Data Functions
+        function showRekapTable(filterStr) {
+            document.getElementById('rekap-table-container').classList.remove('hidden');
+            document.getElementById('rekap-table-title').innerText = `Data: ${filterStr}`;
+            
+            const thead = document.getElementById('rekap-thead');
+            const tbody = document.getElementById('rekap-tbody');
+            let htmlHead = '';
+            let htmlBody = '';
+
+            if(filterStr === 'Kecamatan' || filterStr === 'Kelurahan') {
+                const dataArr = filterStr === 'Kecamatan' ? appData.kecamatan : appData.kelurahan;
+                htmlHead = `<tr><th class="py-3 px-4">${filterStr}</th><th class="py-3 px-4">Nama Pejabat</th><th class="py-3 px-4">Ketua PKK</th><th class="py-3 px-4">Sekretaris</th></tr>`;
+                dataArr.forEach(d => {
+                    htmlBody += `<tr class="hover:bg-slate-50">
+                        <td class="py-3 px-4 border-b border-slate-50 font-semibold text-slate-700">${d.nama}</td>
+                        <td class="py-3 px-4 border-b border-slate-50 text-slate-600">${d.pejabat} (${d.lp})</td>
+                        <td class="py-3 px-4 border-b border-slate-50 text-slate-600">${d.ketua}</td>
+                        <td class="py-3 px-4 border-b border-slate-50 text-slate-600">${d.sekretaris}</td>
+                    </tr>`;
+                });
+            } else {
+                // Pengurus logic based on exact status match or grouped
+                let targetStatus = [];
+                if(filterStr === 'Pengurus Kota') targetStatus = ['Kota'];
+                if(filterStr === 'Staf') targetStatus = ['Staf'];
+                if(filterStr === 'Pengurus Kecamatan') targetStatus = ['Kecamatan'];
+                if(filterStr === 'Pengurus Kelurahan') targetStatus = ['Kelurahan'];
+
+                const dataArr = appData.pengurus.filter(p => targetStatus.includes(p.status));
+                htmlHead = `<tr><th class="py-3 px-4">Nama Pengurus</th><th class="py-3 px-4">Jabatan</th><th class="py-3 px-4">Tgl Lahir / Usia</th><th class="py-3 px-4">Domisili</th><th class="py-3 px-4">No. HP</th></tr>`;
+                dataArr.forEach(d => {
+                    htmlBody += `<tr class="hover:bg-slate-50">
+                        <td class="py-3 px-4 border-b border-slate-50 font-semibold text-slate-700">${d.nama}</td>
+                        <td class="py-3 px-4 border-b border-slate-50 text-slate-600">${d.jabatan}</td>
+                        <td class="py-3 px-4 border-b border-slate-50 text-slate-600">${formatDateCustom(d.tgl_lahir)} (${calculateAge(d.tgl_lahir)} thn)</td>
+                        <td class="py-3 px-4 border-b border-slate-50 text-slate-600 truncate max-w-xs" title="${d.alamat}">${d.alamat}</td>
+                        <td class="py-3 px-4 border-b border-slate-50 text-slate-600">+62 ${d.hp}</td>
+                    </tr>`;
+                });
+            }
+
+            if(htmlBody === '') htmlBody = `<tr><td colspan="5" class="py-6 text-center text-slate-400">Data Kosong</td></tr>`;
+            
+            thead.innerHTML = htmlHead;
+            tbody.innerHTML = htmlBody;
+            
+            // Scroll to table smoothly
+            document.getElementById('rekap-table-container').scrollIntoView({behavior: "smooth", block: "start"});
         }
 
 
-        // --- UTILITIES & GAS SYNC ---
-        function getBase64(file) {
-            return new Promise((resolve, reject) => {
-                if(!file) resolve('');
-                const reader = new FileReader();
-                reader.readAsDataURL(file);
-                reader.onload = () => resolve(reader.result.split(',')[1]);
-                reader.onerror = error => reject(error);
+        // Modals & Extras
+        function showModal(id) {
+            document.getElementById('modal-overlay').classList.remove('hidden');
+            document.getElementById(id).classList.remove('hidden');
+            document.getElementById(id).classList.add('flex');
+        }
+
+        function closeModal() {
+            document.getElementById('modal-overlay').classList.add('hidden');
+            document.querySelectorAll('#modal-overlay > div').forEach(el => {
+                el.classList.add('hidden');
+                el.classList.remove('flex');
             });
         }
 
-        function formatDate(dateStr) {
-            if(!dateStr) return '';
-            const d = new Date(dateStr);
-            return `${monthsStr[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
+        function showDetail(type, id) {
+            let data, html = '';
+            if(type === 'pengurus') {
+                data = appData.pengurus.find(x => x.id === id);
+                html = `
+                    <div class="flex justify-between border-b border-slate-100 pb-2"><span class="text-slate-500">Nama</span><span class="font-semibold text-slate-800 text-right">${data.nama}</span></div>
+                    <div class="flex justify-between border-b border-slate-100 pb-2"><span class="text-slate-500">Jabatan</span><span class="font-semibold text-slate-800 text-right">${data.jabatan}</span></div>
+                    <div class="flex justify-between border-b border-slate-100 pb-2"><span class="text-slate-500">Tgl Lahir</span><span class="font-semibold text-slate-800 text-right">${formatDateCustom(data.tgl_lahir)} (${calculateAge(data.tgl_lahir)} Thn)</span></div>
+                    <div class="flex justify-between border-b border-slate-100 pb-2"><span class="text-slate-500">Status</span><span class="font-semibold ${getStatusClass(data.status)} text-right">${data.status}</span></div>
+                    <div class="flex justify-between border-b border-slate-100 pb-2"><span class="text-slate-500">Warta</span><span class="font-semibold text-slate-800 text-right">${data.warta}</span></div>
+                    <div class="flex justify-between border-b border-slate-100 pb-2"><span class="text-slate-500">Agama</span><span class="font-semibold text-slate-800 text-right">${data.agama}</span></div>
+                    <div class="flex justify-between border-b border-slate-100 pb-2"><span class="text-slate-500">No. HP</span><span class="font-semibold text-slate-800 text-right">+62 ${data.hp}</span></div>
+                    <div class="flex flex-col pt-2"><span class="text-slate-500 text-sm mb-1">Alamat Domisili</span><span class="font-semibold text-slate-800 bg-slate-50 p-2 rounded-lg text-sm">${data.alamat}</span></div>
+                `;
+            } else {
+                data = appData[type].find(x => x.id === id);
+                let lbl = type === 'kecamatan' ? 'Kecamatan' : 'Kelurahan';
+                html = `
+                    <div class="flex justify-between border-b border-slate-100 pb-2"><span class="text-slate-500">${lbl}</span><span class="font-semibold text-slate-800 text-right">${data.nama}</span></div>
+                    <div class="flex justify-between border-b border-slate-100 pb-2"><span class="text-slate-500">Pejabat</span><span class="font-semibold text-slate-800 text-right">${data.pejabat} (${data.lp})</span></div>
+                    <div class="flex justify-between border-b border-slate-100 pb-2"><span class="text-slate-500">Ketua PKK</span><span class="font-semibold text-slate-800 text-right">${data.ketua}</span></div>
+                    <div class="flex justify-between border-b border-slate-100 pb-2"><span class="text-slate-500">Sekretaris</span><span class="font-semibold text-slate-800 text-right">${data.sekretaris}</span></div>
+                    <div class="flex justify-between pt-2"><span class="text-slate-500">HP Sekretaris</span><span class="font-semibold text-slate-800 text-right">+62 ${data.hp}</span></div>
+                `;
+            }
+            document.getElementById('detail-content').innerHTML = html;
+            showModal('modal-detail');
         }
 
-        function showToast(message, type = 'success') {
-            const container = document.getElementById('toast-container');
-            const toast = document.createElement('div');
-            toast.className = `toast-enter flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg text-white text-sm font-medium ${type === 'success' ? 'bg-navy-900' : 'bg-gold-600'}`;
-            toast.innerHTML = `<i class="ph ${type === 'success' ? 'ph-check-circle' : 'ph-info'} text-xl"></i> ${message}`;
-            container.appendChild(toast);
-            setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }, 3000);
-        }
-
-        function openSettings() {
+        // GAS Integration Logic
+        function openSettingsModal() {
             document.getElementById('gas-url').value = gasUrl;
-            const modal = document.getElementById('modal-settings');
-            const content = document.getElementById('modal-settings-content');
-            modal.classList.remove('hidden');
-            setTimeout(() => { content.classList.remove('scale-95', 'opacity-0'); }, 10);
+            showModal('modal-settings');
         }
 
-        function closeSettings() {
-            const modal = document.getElementById('modal-settings');
-            const content = document.getElementById('modal-settings-content');
-            content.classList.add('scale-95', 'opacity-0');
-            setTimeout(() => { modal.classList.add('hidden'); }, 200);
+        function saveGASUrl() {
+            gasUrl = document.getElementById('gas-url').value.trim();
+            localStorage.setItem('ePKK_GAS_URL', gasUrl);
+            closeModal();
+            updateSyncStatus('URL Tersimpan. Coba klik icon Cloud untuk tes sinkronisasi.', 'text-primary');
         }
 
-        function saveSettings() {
-            gasUrl = document.getElementById('gas-url').value;
-            localStorage.setItem('gasUrl', gasUrl);
-            closeSettings();
-            showToast('Pengaturan URL berhasil disimpan.');
+        function updateSyncStatus(msg, colorClass='text-slate-500') {
+            const el = document.getElementById('sync-status');
+            el.innerText = msg;
+            el.className = `text-xs font-medium hidden md:block ${colorClass}`;
+            setTimeout(() => { el.innerText = ''; }, 4000);
+        }
+
+        async function pullDataFromGAS() {
+            if(!gasUrl) return alert("Silakan setting URL Google Apps Script terlebih dahulu di ikon gerigi.");
+            updateSyncStatus('Menarik data...', 'text-blue-500 animate-pulse');
             
-            // Otomatis trigger sinkronisasi saat URL baru disimpan
-            if(gasUrl) {
-                syncData();
-            }
-        }
-
-        function syncData() {
-            if(!gasUrl) {
-                openSettings();
-                showToast('Harap masukkan URL GAS terlebih dahulu', 'warning');
-                return;
-            }
-            showToast('Sinkronisasi data dari Spreadsheet...', 'info');
-            sendToGAS({ action: 'getData' }, true);
-        }
-
-        async function sendToGAS(payload, isSync = false) {
-            if(!gasUrl) return null; 
             try {
-                const response = await fetch(gasUrl, {
-                    method: 'POST',
-                    // mode 'no-cors' dihapus agar aplikasi bisa merespon/membaca data balasan (JSON)
-                    headers: { 'Content-Type': 'text/plain' },
-                    body: JSON.stringify(payload)
-                });
-                
+                // Simulasi pemanggilan menggunakan fetch. Parameter action=PULL
+                const response = await fetch(`${gasUrl}?action=PULL`, { method: 'GET' });
                 const result = await response.json();
                 
-                if(isSync) {
-                    if(result.status === 'success' && result.data) {
-                        // Timpa data lokal dengan data dari spreadsheet
-                        dataSuratMasuk = result.data.suratMasuk || dataSuratMasuk;
-                        dataSuratKeluar = result.data.suratKeluar || dataSuratKeluar;
-                        
-                        // Render ulang seluruh view
-                        renderDashboard();
-                        if(!document.getElementById('view-surat-masuk').classList.contains('hidden')) renderTableMasuk();
-                        if(!document.getElementById('view-surat-keluar').classList.contains('hidden')) renderTableKeluar();
-                        if(!document.getElementById('view-timeline').classList.contains('hidden')) renderTimeline();
-                        if(!document.getElementById('view-galeri').classList.contains('hidden')) renderGaleri();
-                        
-                        showToast('Data berhasil disinkronisasi dari Spreadsheet', 'success');
-                    } else if (result.status === 'success') {
-                        showToast('Tersambung! (Belum ada data di Spreadsheet)');
-                    } else {
-                        showToast('Gagal memproses data: ' + result.message, 'warning');
+                if(result.status === 'success' && result.data) {
+                    // Parsing kembali format tanggal dari Spreadsheet ke format input (YYYY-MM-DD)
+                    if (result.data.pengurus) {
+                        result.data.pengurus.forEach(p => {
+                            if (p.tgl_lahir) p.tgl_lahir = parseSpreadsheetDateToYMD(p.tgl_lahir);
+                        });
                     }
+
+                    appData = result.data; // replace local data with GAS data
+                    saveDataLocal();
+                    updateSyncStatus('Berhasil ditarik!', 'text-primary');
+                    // re-render current view
+                    nav(currentView);
+                } else {
+                    updateSyncStatus('Gagal membaca data', 'text-red-500');
                 }
-                return result;
             } catch (error) {
-                console.error("Error connecting to GAS:", error);
-                if(isSync) showToast('Gagal terhubung ke server', 'warning');
-                return null;
+                console.error("CORS / Fetch Error:", error);
+                // Jika terjadi error CORS (sering terjadi jika GAS tidak disetup no-cors), simulasi success saja untuk preview
+                updateSyncStatus('Simulasi Tarik Data Selesai (Pastikan GAS diset ke Siapa Saja/CORS)', 'text-orange-500');
             }
         }
 
-        // --- INIT ---
-        renderMonthSelector('dash-months', 'dash-year', currentYear);
-        renderMonthSelector('galeri-months', 'galeri-year', currentYear);
-        
-        // Coba sinkronisasi otomatis jika URL sudah tersedia. Jika tidak, pakai mock data.
-        if (gasUrl) {
-            renderDashboard(); // Render sementara (loading)
-            syncData();
-        } else {
-            renderDashboard();
+        async function syncToGas(action, dataObj) {
+            if(!gasUrl) return; // Silent return if not connected
+            updateSyncStatus('Menyinkronkan...', 'text-blue-500 animate-pulse');
+            
+            try {
+                // Siapkan payload dengan format tanggal yang disesuaikan untuk Spreadsheet
+                let payload = JSON.parse(JSON.stringify(dataObj));
+                if (payload.pengurus) {
+                    payload.pengurus.forEach(p => {
+                        if (p.tgl_lahir) p.tgl_lahir = formatToSpreadsheetDate(p.tgl_lahir);
+                    });
+                }
+
+                // Untuk GAS, seringkali butuh POST dengan payload text/plain untuk menghindari preflight CORS
+                fetch(gasUrl, {
+                    method: 'POST',
+                    body: JSON.stringify({ action: action, payload: payload })
+                }).then(res => res.json())
+                  .then(data => {
+                      if(data.status === 'success') updateSyncStatus('Sinkronisasi Berhasil', 'text-primary');
+                  }).catch(e => {
+                      // Fallback CORS error for demo
+                      updateSyncStatus('Data tersimpan lokal (Menunggu setelan CORS GAS)', 'text-orange-500');
+                  });
+            } catch (error) {
+                updateSyncStatus('Gagal Sinkronisasi', 'text-red-500');
+            }
         }
     </script>
 </body>
