@@ -703,7 +703,7 @@
             if(appData.pengurus.length === 0) return;
             // Get random 8
             let shuffled = [...appData.pengurus].sort(() => 0.5 - Math.random());
-            let selected = shuffled.slice(0, 8);
+            let selected = shuffled.slice(0, 12);
             
             let html = '';
             selected.forEach(p => {
